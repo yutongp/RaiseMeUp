@@ -16,6 +16,20 @@ ss.http.route('/', function(req, res){
   res.serveClient('main');
 });
 
+
+// Define a single-page client called 'main'
+ss.client.define('game', {
+  view: 'game.html',
+  css:  ['libs/reset.css', 'app.styl'],
+  code: ['libs/jquery.min.js', 'app'],
+  tmpl: '*'
+});
+
+// Serve this client on the root URL
+ss.http.route('/game', function(req, res){
+  res.serveClient('game');
+});
+
 // Code Formatters
 ss.client.formatters.add(require('ss-stylus'));
 
