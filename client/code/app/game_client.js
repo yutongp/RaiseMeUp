@@ -12,6 +12,9 @@ var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMat
 var cubeGeo, cubeMaterial;
 var i, intersector;
 
+var gridCellSize = 100;
+var gridCellNumber = 10;
+
 $(document).ready(function() {
 	init();
 	animate();
@@ -35,9 +38,9 @@ $(document).ready(function() {
 
 			voxelPosition.addVectors( data[3], tmpVec );
 
-			voxelPosition.x = Math.floor( voxelPosition.x / 50 ) * 50 + 25;
-			voxelPosition.y = Math.floor( voxelPosition.y / 50 ) * 50 + 25;
-			voxelPosition.z = Math.floor( voxelPosition.z / 50 ) * 50 + 25;
+			voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
+			voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
+			voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
 
 			//from function onDocumentMouseDown
 			var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
@@ -71,14 +74,14 @@ function init() {
 
 	// roll-over helpers
 
-	rollOverGeo = new THREE.CubeGeometry( 50, 50, 50 );
+	rollOverGeo = new THREE.CubeGeometry( gridCellSize, gridCellSize, gridCellSize );
 	rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
 	rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
 	scene.add( rollOverMesh );
 
 	// cubes
 
-	cubeGeo = new THREE.CubeGeometry( 50, 50, 50 );
+	cubeGeo = new THREE.CubeGeometry( gridCellSize, gridCellSize, gridCellSize );
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading } );
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	cubeMaterial.ambient = cubeMaterial.color;
@@ -89,7 +92,9 @@ function init() {
 
 	// grid
 
-	plane = new THREE.Mesh( new THREE.PlaneGeometry( 1000, 1000, 20, 20 ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
+	var gridSize = gridCellSize * gridCellNumber;
+	
+	plane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
 
@@ -157,9 +162,9 @@ function setVoxelPosition( intersector ) {
 
 	voxelPosition.addVectors( intersector.point, tmpVec );
 
-	voxelPosition.x = Math.floor( voxelPosition.x / 50 ) * 50 + 25;
-	voxelPosition.y = Math.floor( voxelPosition.y / 50 ) * 50 + 25;
-	voxelPosition.z = Math.floor( voxelPosition.z / 50 ) * 50 + 25;
+	voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
+	voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
+	voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
 
 }
 
