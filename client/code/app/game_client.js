@@ -35,24 +35,8 @@ $(document).ready(function() {
 		}
 
 		if (data[0] == 1) {
-			//from function setVoxelPosition
-			normalMatrix.getNormalMatrix( data[1] );
-
-			tmpVec.copy( data[2] );
-			tmpVec.applyMatrix3( normalMatrix ).normalize();
-
-			voxelPosition.addVectors( data[3], tmpVec );
-
-			voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
-			voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
-			voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
-			
-			// Convert into matrix index and call addVoxel function to add
-			var index = new Object();
-			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
-			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
-			index.z = Math.floor( voxelPosition.y / gridCellSize );
-			addVoxel(index);
+			var index = data[1];
+			addVoxel( index );
 		}
 	});
 
@@ -204,17 +188,18 @@ function onDocumentMouseDown( event ) {
 			// delete cube
 			ss.rpc('demo.clientMove', [0, intersector.object])
 		} else {
-			//intersector = getRealIntersector( intersects );
-			//setVoxelPosition( intersector );
-			//var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-			//voxel.position.copy( voxelPosition );
-			//voxel.matrixAutoUpdate = false;
-			//voxel.updateMatrix();
-			//scene.add( voxel );
-
 			// create cube
-			ss.rpc('demo.clientMove', [1, intersector.object.matrixWorld
-					, intersector.face.normal, intersector.point])
+			normalMatrix.getNormalMatrix( intersector.object.matrixWorld );
+
+			tmpVec.copy( intersector.face.normal );
+			tmpVec.applyMatrix3( normalMatrix ).normalize();
+			
+			// Convert into matrix index and call addVoxel function to add
+			var index = new Object();
+			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
+			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
+			index.z = Math.floor( voxelPosition.y / gridCellSize );
+			ss.rpc('demo.clientMove', [1, index])
 		}
 	}
 }
