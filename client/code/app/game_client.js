@@ -17,6 +17,35 @@ $(document).ready(function() {
 	animate();
 
 	ss.event.on('addBox', function(data) {
+		if (data[0] == 0) {
+			//from function onDocumentMouseDown
+			if ( data[1] != plane ) {
+
+				scene.remove( data[1] );
+
+			}
+		}
+
+		if (data[0] == 1) {
+			//from function setVoxelPosition
+			normalMatrix.getNormalMatrix( data[1] );
+
+			tmpVec.copy( data[2] );
+			tmpVec.applyMatrix3( normalMatrix ).normalize();
+
+			voxelPosition.addVectors( data[3], tmpVec );
+
+			voxelPosition.x = Math.floor( voxelPosition.x / 50 ) * 50 + 25;
+			voxelPosition.y = Math.floor( voxelPosition.y / 50 ) * 50 + 25;
+			voxelPosition.z = Math.floor( voxelPosition.z / 50 ) * 50 + 25;
+
+			//from function onDocumentMouseDown
+			var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+			voxel.position.copy( voxelPosition );
+			voxel.matrixAutoUpdate = false;
+			voxel.updateMatrix();
+			scene.add( voxel );
+		}
 	});
 
 });
@@ -49,7 +78,7 @@ function init() {
 	// cubes
 
 	cubeGeo = new THREE.CubeGeometry( 50, 50, 50 );
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "textures/square-outline-textured.png" ) } );
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	cubeMaterial.ambient = cubeMaterial.color;
 
 	// picking
@@ -77,7 +106,7 @@ function init() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 	container.appendChild( renderer.domElement );
-
+ 
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
@@ -150,37 +179,32 @@ function onDocumentMouseDown( event ) {
 	event.preventDefault();
 
 	var intersects = raycaster.intersectObjects( scene.children );
+	intersector = getRealIntersector( intersects );
 
 	if ( intersects.length > 0 ) {
 
 		intersector = getRealIntersector( intersects );
 
-		// delete cube
-
 		if ( isCtrlDown ) {
+			//if ( intersector.object != plane ) {
+				//scene.remove( intersector.object );
+			//}
 
-			if ( intersector.object != plane ) {
-
-				scene.remove( intersector.object );
-
-			}
+			// delete cube
+			ss.rpc('demo.clientMove', [0, intersector.object])
+		} else {
+			//intersector = getRealIntersector( intersects );
+			//setVoxelPosition( intersector );
+			//var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+			//voxel.position.copy( voxelPosition );
+			//voxel.matrixAutoUpdate = false;
+			//voxel.updateMatrix();
+			//scene.add( voxel );
 
 			// create cube
-
-		} else {
-
-			intersector = getRealIntersector( intersects );
-			setVoxelPosition( intersector );
-
-			var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-			voxel.position.copy( voxelPosition );
-			voxel.matrixAutoUpdate = false;
-			voxel.updateMatrix();
-			scene.add( voxel );
-
+			ss.rpc('demo.clientMove', [1, intersector.object.matrixWorld
+					, intersector.face.normal, intersector.point])
 		}
-
-		ss.rpc('demo.clientMove', position)
 	}
 }
 
