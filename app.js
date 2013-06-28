@@ -21,7 +21,7 @@ ss.http.route('/', function(req, res){
 ss.client.define('game', {
   view: 'game.html',
   css:  ['libs/reset.css', 'app.styl'],
-  code: ['libs/jquery.min.js', 'app'],
+  code: ['libs/', 'app'],
   tmpl: '*'
 });
 
