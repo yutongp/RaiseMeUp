@@ -53,6 +53,7 @@ $(document).ready(function() {
 function init() {
 
 	container = document.createElement( 'div' );
+	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
 
 	var info = document.createElement( 'div' );
@@ -106,19 +107,15 @@ function init() {
 	renderer = new THREE.WebGLRenderer( { antialias: true, preserveDrawingBuffer: true } );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
-	container.appendChild( renderer.domElement );
+	$('#game_board').append("<div id='grid'></div>");
+	$('#grid').append( renderer.domElement );
  
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
-	container.appendChild( stats.domElement );
-
-	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-	document.addEventListener( 'keydown', onDocumentKeyDown, false );
-	document.addEventListener( 'keyup', onDocumentKeyUp, false );
-
-	//
+	$('#grid').append( stats.domElement );
+	$('#grid').bind('mousedown', onDocumentMouseDown);
+	$('#grid').bind('mousemove', onDocumentMouseMove);
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
