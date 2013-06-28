@@ -126,7 +126,6 @@ function init() {
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
-
 }
 
 function signIn() {
@@ -135,6 +134,8 @@ function signIn() {
         	onLoad: function() { 
 			$('#sign_up').find('input:first').focus()},
 		onClose: function() {
+			playerName = $('input[name="player_name"]').val();
+			roomNumber = $('input[name="room_number"]').val();
 			init();
 			animate();},
 		closeSelector: ".confirm"
