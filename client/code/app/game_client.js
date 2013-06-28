@@ -11,14 +11,14 @@ var rollOverMesh, rollOverMaterial;
 var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
 var cubeGeo, cubeMaterial;
 var i, intersector;
+var playerName, roomNumber;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
 
 $(document).ready(function() {
-	init();
-	animate();
-
+	signIn();
+	
 	ss.event.on('addBox', function(data) {
 		if (data[0] == 0) {
 			//from function onDocumentMouseDown
@@ -129,6 +129,18 @@ function init() {
 
 }
 
+function signIn() {
+	$('#sign_up').lightbox_me({
+        	centered: true, 
+        	onLoad: function() { 
+			$('#sign_up').find('input:first').focus()},
+		onClose: function() {
+			init();
+			animate();},
+		closeSelector: ".confirm"
+        });
+}
+
 function onWindowResize() {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
@@ -137,6 +149,7 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
+
 
 function getRealIntersector( intersects ) {
 
