@@ -17,6 +17,11 @@ var gridCellNumber = 10;
 
 $(document).ready(function() {
 	init();
+	var index = new Object();
+	index.x = -1;
+	index.y = 3;
+	index.z = 1;
+	addVoxel(index);
 	animate();
 
 	ss.event.on('addBox', function(data) {
@@ -41,13 +46,13 @@ $(document).ready(function() {
 			voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
 			voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
 			voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
-
-			//from function onDocumentMouseDown
-			var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-			voxel.position.copy( voxelPosition );
-			voxel.matrixAutoUpdate = false;
-			voxel.updateMatrix();
-			scene.add( voxel );
+			
+			// Convert into matrix index and call addVoxel function to add
+			var index = new Object();
+			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
+			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
+			index.z = Math.floor( voxelPosition.y / gridCellSize );
+			addVoxel(index);
 		}
 	});
 
@@ -278,4 +283,22 @@ function render() {
 
 	renderer.render( scene, camera );
 
+}
+
+function addVoxel(index) {
+	if (index.x < 0 || index.x >= gridCellNumber)
+		return;
+	if (index.y < 0 || index.y >= gridCellNumber)
+		return;
+	if (index.z < 0) 
+		return;
+	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+	var gridSize = gridCellSize * gridCellNumber;
+	var xCoordinate = index.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var yCoordinate = index.z * gridCellSize + gridCellSize / 2;
+	var zCoordinate = index.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
+	voxel.matrixAutoUpdate = false;
+	voxel.updateMatrix();
+	scene.add( voxel );
 }
