@@ -82,7 +82,15 @@ function init() {
 	// cubes
 
 	cubeGeo = new THREE.CubeGeometry( gridCellSize, gridCellSize, gridCellSize );
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading } );
+	//cubecolorfeed ="0."
+	//for (var i = 0; i < playerName.length; i++) {
+		//cubecolorfeed += playerName.charCodeAt(i).toString();
+	//}
+
+	//console.log(parseFloat(cubecolorfeed));
+	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0x00ff80, shading: THREE.FlatShading } );
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	cubeMaterial.ambient = cubeMaterial.color;
 
