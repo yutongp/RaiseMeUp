@@ -17,11 +17,6 @@ var gridCellNumber = 10;
 
 $(document).ready(function() {
 	init();
-	var index = new Object();
-	index.x = -1;
-	index.y = 3;
-	index.z = 1;
-	addVoxel(index);
 	animate();
 
 	ss.event.on('addBox', function(data) {
@@ -270,13 +265,14 @@ function render() {
 
 }
 
-function addVoxel(index) {
+function addVoxel(index, materialColor) {
 	if (index.x < 0 || index.x >= gridCellNumber)
 		return;
 	if (index.y < 0 || index.y >= gridCellNumber)
 		return;
 	if (index.z < 0) 
 		return;
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0x00ff80, shading: THREE.FlatShading } );
 	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = index.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
