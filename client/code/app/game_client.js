@@ -148,6 +148,8 @@ function signIn() {
 		$('#sign_up').find('input:first').focus()
 	},
 	onClose: function() {
+		playerName = $('input[name="player_name"]').val();
+		roomNumber = $('input[name="room_number"]').val();
 		if (playerName == '' || roomNumber == '') {
 			$('#emptyInput').attr('style','visibility: visible;');
 			signIn();
