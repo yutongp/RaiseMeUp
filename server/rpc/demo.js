@@ -486,24 +486,44 @@ exports.actions = function(req, res, ss) {
 			},
 
 			connectGame: function(playerName, roomNumber) {
+				var first = false;
 				if (roomMap[roomNumber] == undefined) {
 					roomMap[roomNumber] = new Room(roomNumber);
+					first = true;
 				}
 
 				thisRoom = roomMap[roomNumber];
 				thisRoom.players.push(playerName);
 				req.session.channel.subscribe(roomNumber);
 				ss.publish.channel(roomNumber, 'addPlayer', playerName);
-				return res(thisRoom.blocks);
+				return res(thisRoom.blocks, first);
 			},
 
 			requireReward: function(numReward, lastReward, channel) {
-				ss.publish.channel(channel, 'addRewardlist', getRewardCubePosition(numReward, lastReward));
+				var data = getRewardCubePosition(numReward, lastReward);
+				for (var i = 0; i < data.length;i++) {
+					roomMap[channel].worldMap[data[i].x][data[i].y][data[i].z] = BONUS_CELL;
+				}
+				ss.publish.channel(channel, 'addRewardlist', data);
+			},
+
+			botMove: function(position, channel) {
+				if (roomMap[channel].worldMap[position.x][position.y][position.z] == BONUS_CELL) {
+					var nextReward = new Object();
+					nextReward.x = position.x;
+					nextReward.y = position.y;
+					nextReward.z = position.z + 15;
+					//FIXME
+					roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, position,nextReward,2)) + 1;
+					ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
+				}
+				roomMap[channel].worldMap[roomMap[channel].botPosition.x][roomMap[channel].botPosition.y][roomMap[channel].botPosition.z] = EMPTY_CELL;
+				roomMap[channel].botPosition = position;
+				roomMap[channel].worldMap[position.x][position.y][position.z] = PLAYER_CELL;
+				ss.publish.channel(channel, 'moveBot', position);
 			},
 
 			getRewardNum: function(currentReward, nextReward, channel) {
-				roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, currentReward,nextReward,2)) + 1;
-				ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
 			},
 
 	};

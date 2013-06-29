@@ -6,6 +6,7 @@ var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
 var SPEED = 30 / 7200;
 
+var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
 
 var container, stats;
@@ -107,10 +108,15 @@ function gameInit() {
 		blocksLeft = data;
 		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
 	});
+
+	ss.event.on('moveBot', function(data, channelNumber) {
+		movePlayer(data);
+	});
 }
 
 function setSocket() {
-	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
+	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData, first) {
+		firstPlayer = first;
 		blocksLeft = initData;
 		gameboard_init();
 		animate();
@@ -152,8 +158,12 @@ function gameboard_init() {
 	playerPosition.y = 0;
 	playerPosition.z = 0;
 	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = PLAYER_CELL;
-	requireReward(5, playerPosition);
-
+	if (firstPlayer == true) {
+		requireReward(5, playerPosition);
+	} else {
+		ss.rpc('syncWorld', roomNumber, function(worldData){
+		});
+	}
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
@@ -286,11 +296,17 @@ function gameboard_init() {
 			new_position.y = next_position.y;
 			new_position.z = next_position.z+1;
 			console.log(new_position);
-			movePlayer(new_position);
+			movePlayerWrapper(new_position);
 		}
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
+}
+
+
+function movePlayerWrapper(new_position) {
+	new_position.z = (new_position.z-waterPosition) % gridHeight + worldIndex;
+	ss.rpc("demo.botMove", new_position, roomNumber);
 }
 
 function signIn() {
@@ -645,7 +661,6 @@ function movePlayer(position) {
 	///////
 
 	checkReward(position);
-	position.z = WorldztoAbsoz(position.z);
 	//webGL update bot object
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
@@ -675,24 +690,19 @@ function waterFlow(waterPos) {
 }
 
 function setWorldMap(position, type) {
-	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	var newZ = (position.z-waterPosition) % gridHeight + worldIndex;
 	worldMap[position.x][position.y][newZ] = type;
 }
 
 function checkReward(position) {
-	console.log("ss,");
+
+	position.z = (position.z-waterPosition) % gridHeight + worldIndex;
 	if (getCellType(position) == BONUS_CELL) {
 		var i = 0
 		for (i = 0; i < rewardHash.length; i++) {
 				console.log("sadasdadsadas,");
 				if (rewardHash[i] != undefined) {
 					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == WorldztoAbsoz(position.z)) {
-						console.log("sadasdad", i);
-						if(rewardHash[i+1] == undefined) {
-							ss.rpc('demo.getRewardNum', rewardHash[i].index, playerPosition, roomNumber);
-						} else {
-						ss.rpc('demo.getRewardNum', rewardHash[i].index, rewardHash[i+1].index, roomNumber);
-						}
 						scene.remove(rewardHash[i]);
 						rewardHash[i] = undefined;
 						requireReward(1, playerPosition);
@@ -711,7 +721,7 @@ function WorldztoAbsoz(wz) {
 }
 
 function getCellType(position) {
-	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	var newZ = (position.z-waterPosition) % gridHeight + worldIndex;
 	return worldMap[position.x][position.y][newZ];
 }
 
