@@ -14,7 +14,7 @@ function Room (roomn) {
 }
 
 
-var getAward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
+var getReward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
 
 	var blocksNeed = blocksNeedBetweenTwoReward(currentReward,nextReward);
 	var blockRatio = currentNumOfBlocks/blocksNeed;
@@ -37,8 +37,8 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 
 	for(i = 0; i < numOfReward; i++){
 
-		var newX = Math.random()*bounds.maxX;
-		var newY = Math.random()*bounds.maxY;
+		var newX = Math.random()*(bounds.maxX-bounds.minX)+bounds.minX;
+		var newY = Math.random()*(bounds.maxY-bounds.minY)+bounds.minY;
 		if(newX == curHigestReward.x){
 			newX+=1;
 		}
