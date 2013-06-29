@@ -2,9 +2,9 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
-var PLAYER_CELL = 100;
-var BONUS_CELL = 666;
-var SPEED = 150 / 7200;
+var PLAYER_CELL = -1;
+var BONUS_CELL = -2;
+var SPEED = 30 / 7200;
 
 var INITIAL_CAMERA_HEIGHT = 800;
 
@@ -25,9 +25,12 @@ var cubecolor;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
-var gridHeight = 11;
+var gridHeight = 3000;
 var worldMap = new Array();
 var waterPosition = 0;
+var oldWaterPosition = 0;
+var oldWaterPostion = 0;
+var worldIndex = 0;
 
 var playerPosition = new Object();
 var playerGeo;
@@ -36,26 +39,18 @@ var player;
 
 var bonusGeo;
 var bonusMaterial;
+var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 
-var highestLevel;
 var initialTime;
+var startTime = 0;
+var countdownSecond = 10;
+var clock;
 
 var unCountedObjectArray;
 var previousIndex;
 
 $(document).ready(function() {
-
-	//var hammertime = $(document).hammer();
-
-/*	// the whole area
-	hammertime.on("drag", function(ev) {
-				console.log(this, ev);
-				ev.preventDefault();
-				theta += -ev.gesture.deltaX * 150/ ev.currentTarget.documentElement.clientWidth ;
-				    //alert(ev.gesture.deltaX + ":" + ev.currentTarget.documentElement.clientWidth);
-				});*/
-
-
+	ev.preventDefault();
 	signIn();
 });
 
@@ -71,10 +66,12 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			addVoxel( data[1], parseInt(data[2]) );
-			worldMap[data[1].x][data[1].y][data[1].z - waterPosition] = VOXEL_CELL;
-			blocksLeft = blocksLeft - 1;
-			document.getElementById('blockNum').innerHTML = blocksLeft.toString();
+			if (getCellType(data[1]) == 0 && blocksLeft > 0) {				
+				addVoxel( data[1], parseInt(data[2]) );
+				setWorldMap(data[1], VOXEL_CELL);
+				blocksLeft = blocksLeft - 1;
+				document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+			}
 		}
 	});
 
@@ -99,6 +96,16 @@ function requireReward(numReward, lastReward) {
 	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
 }
 
+function gameCountDown() {
+	countdownSecond --;
+	if (countdownSecond >= 0)
+		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br><br>';
+	else {
+		$('#countDown').attr('style','display: none;');
+		clock=window.clearInterval(clock);
+	}		
+}
+
 function gameboard_init() {
 	previousIndex = new Object();
 	previousIndex.x = 0;
@@ -106,7 +113,7 @@ function gameboard_init() {
 	previousIndex.z = 0;
 	unCountedObjectArray = new Array();
 	initialTime = Date.now();
-	highestLevel = 0;
+
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
@@ -127,8 +134,11 @@ function gameboard_init() {
 
 	var info = document.createElement('div');
 	info.id = 'info';
-	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a>';
+	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="countDown">Start flooding in...<br><a id="countSecond">10<br><br></a>';
 	container.appendChild(info);
+
+	initialTime = Date.now();
+	clock=self.setInterval(function(){gameCountDown()},1000);
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
@@ -221,31 +231,67 @@ function gameboard_init() {
 		var new_position = new Object();
 		new_position.x = playerPosition.x;
 		new_position.y = playerPosition.y;
-		new_position.z = playerPosition.z;
+		new_position.z = playerPosition.z - waterPosition - 1;
+		var next_position = new Object();
+		next_position.z = -2;
 		switch (e.which) {
 			case 115:
 				console.log('down');
-				new_position.y++;
+				next_position = canGoDown(new_position, worldMap, worldIndex, waterPosition);
 				break;
 			case 119:
 				console.log('up');
-				new_position.y--;
+				next_position = canGoUp(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			case 97:
 				console.log('left');
-				new_position.x--;
+				next_position = canGoLeft(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			case 100:
 				console.log('right');
-				new_position.x++;
+				next_position = canGoRight(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			default:
 		}
-		movePlayer(new_position);
+		if (next_position.z != -2) {
+			new_position.x = next_position.x;
+			new_position.y = next_position.y;
+			new_position.z = next_position.z+1;
+			console.log(new_position);
+			movePlayer(new_position);
+		}
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
 }
+
+function signIn() {
+	$('#sign_up').lightbox_me({
+	centered: true,
+	closeClick: false,
+	onLoad: function() {
+		$('#sign_up').find('input:first').focus()
+	},
+	onClose: function() {
+		playerName = $('input[name="player_name"]').val();
+		roomNumber = $('input[name="room_number"]').val();
+		if (playerName == '' || roomNumber == '') {
+			$('#emptyInput').attr('style','visibility: visible;');
+			signIn();
+		}
+		else {
+			gameInit();
+		}
+	},
+	closeSelector: ".confirm"
+	});
+}
+
+<<<<<<< HEAD
+=======
+
+
+
 
 function signIn() {
 	$('#sign_up').lightbox_me({
@@ -267,7 +313,7 @@ function signIn() {
 	closeSelector: ".confirm"
 	});
 }
-
+>>>>>>> 2a3bfc42216038411fa515f9d5d53b800dd18c54
 
 function onWindowResize() {
 
@@ -478,8 +524,8 @@ function render() {
 	}*/
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
+	waterFlow(waterPosition);
 
-	console.log(waterPosition);
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
@@ -489,7 +535,26 @@ function render() {
 	
 	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
 	renderer.render( scene, camera );
-
+	
+	//if (Date.now() - initialTime > 10000) {
+		//if (startTime == 0)
+			//startTime = Date.now();
+		//var currentWaterHeight = (Date.now() - startTime ) * SPEED;
+		//waterPosition = Math.floor(currentWaterHeight / gridCellSize);
+		//camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+		//camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+		//camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
+		//movingPlane.position.y = currentWaterHeight;
+		//camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
+		//renderer.render( scene, camera );
+	//}
+	//else {
+		//camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+                //camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+                //camera.position.y = INITIAL_CAMERA_HEIGHT;
+		//camera.lookAt( new THREE.Vector3(0,0,0));
+		//renderer.render( scene, camera );
+	//}
 }
 
 function addVoxel(position, materialColor) {
@@ -508,31 +573,28 @@ function addVoxel(position, materialColor) {
 	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
-	if (position.z > highestLevel)
-		highestLevel = position.z;
 	scene.add( voxel );
 }
 
 function movePlayer(position) {
-	if (position.x < 0 || position.x >= gridCellNumber)
-		return;
-	if (position.y < 0 || position.y >= gridCellNumber)
-		return;
-	if (position.z < 0) 
-		return;
-	var xMoved = Math.abs(position.x - playerPosition.x);
-	var yMoved = Math.abs(position.y - playerPosition.y);
-	if (xMoved + yMoved > 1)
-		return;
-	if (position.z < playerPosition.z || position.z - playerPosition.z > 1)
-		return;
+	//if (position.x < 0 || position.x >= gridCellNumber)
+		//return;
+	//if (position.y < 0 || position.y >= gridCellNumber)
+		//return;
+	//if (position.z < 0) 
+		//return;
+	//var xMoved = Math.abs(position.x - playerPosition.x);
+	//var yMoved = Math.abs(position.y - playerPosition.y);
+	//if (xMoved + yMoved > 1)
+		//return;
+	//if (position.z - playerPosition.z > 1)
+		//return;
 	///////
-
-	if (worldMap[position.x][position.y][position.z - waterPosition] = 1) {}
-
 
 	///////
 
+	position.z = WorldztoAbsoz(position.z);
+	checkReward(position);
 	//webGL update bot object
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
@@ -540,29 +602,50 @@ function movePlayer(position) {
 	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	player.updateMatrix();
-
-	//update global var
-	playerPosition.x = position.x;
-	playerPosition.y = position.y;
-	playerPosition.z = position.z;
-
+	
 	//update world map
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z - waterPosition] = EMPTY_CELL;
+	setWorldMap(playerPosition, EMPTY_CELL);
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z - waterPosition] = PLAYER_CELL;
-	if (position.z > highestLevel)
-		highestLevel = position.z;
+	setWorldMap(playerPosition, PLAYER_CELL);
 }
 
-function waterFlow() {
+function waterFlow(waterPos) {
 	//wrap world map
-	if ( (waterPosition + 1) == gridHeight) {
-		waterPosition = 0;
-	} else {
-		waterPosition++;
+	if ( waterPos - oldWaterPosition >=1 ) {
+		if (worldIndex + 1 == gridHeight)
+			worldIndex = 0;
+		else
+			worldIndex = worldIndex + 1;
+		oldWaterPosition = waterPos;
 	}
+}
+
+function setWorldMap(position, type) {
+	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	worldMap[position.x][position.y][newZ] = type;
+}
+
+function checkReward(position) {
+	if (getCellType(position) == BONUS_CELL) {
+		console.log("dadwada!!!!!!!");
+		blocksLeft += 9999;
+		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+	}
+}
+
+function WorldztoAbsoz(wz) {
+	if (wz >= worldIndex) {
+		return (wz - worldIndex + waterPosition);
+	} else {
+		return (waterPosition + gridHeight - (worldIndex - wz));
+	}
+}
+
+function getCellType(position) {
+	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	return worldMap[position.x][position.y][newZ];
 }
 
 function addBonus( position ) {
@@ -570,7 +653,7 @@ function addBonus( position ) {
 		return;
 	if (position.y < 0 || position.y >= gridCellNumber)
 		return;
-	if (position.z < 0) 
+	if (position.z < 0)
 		return;
 	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
@@ -581,10 +664,181 @@ function addBonus( position ) {
 	bonus.matrixAutoUpdate = false;
 	bonus.updateMatrix();
 	bonus.index = position;
-	worldMap[position.x][position.y][position.z] = BONUS_CELL;
-	if (position.z > highestLevel)
-		highestLevel = position.z;
 	scene.add( bonus );
 	unCountedObjectArray.push(bonus);
 	console.log(this, unCountedObjectArray);
+}
+
+
+//x - 1
+function canGoLeft(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var currentZindex = nextCube.z;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.x -= 1;
+
+	if(cube.x-1<bounds.minX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x-1][cube.y][nextCube.z]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+	return nextCube;
+}
+
+//x+1
+function canGoRight(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.x += 1;
+
+	console.log('***:');
+	console.log(nextCube);
+	console.log('////:');
+	console.log(cube);
+	if(cube.x+1>bounds.maxX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x+1][cube.y][nextCube.z]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	console.log(world[cube.x+1][cube.y][nextCube.z]);
+	console.log(world[cube.x+1][cube.y][down1Zindex]);
+	console.log(world[cube.x+1][cube.y][up1Zindex]);
+	console.log(nextCube);
+	console.log(WaterOffset);
+
+
+	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	console.log(world[cube.x+1][cube.y][up1Zindex]);
+	console.log(world[cube.x+1][cube.y][up2Zindex]);
+	console.log(up2Zindex);
+	console.log(indexOffset);
+	console.log(nextCube);
+	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+}
+
+//y-1
+function canGoUp(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.y -= 1;
+
+	if(cube.y-1<bounds.minY){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x][cube.y-1][nextCube.z]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+}
+
+
+//y+1
+function canGoDown(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.y += 1;
+
+	if(cube.y+1 > bounds.maxY){
+		console.log(1);
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
+
+		console.log(2);
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
+
+		console.log(3);
+		nextCube.z  = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
 }
