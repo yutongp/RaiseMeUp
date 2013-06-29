@@ -10,6 +10,9 @@ var fromRight = 1002;// x - 1
 var fromUp = 1003;// y + 1;
 var fromBot = 1004;// y - 1
 var fromNothing = 1005;
+var WaterOffset;
+var indexOffset;
+var zLength;
 
 
 var roomMap = {}
@@ -153,7 +156,7 @@ var getPath2 = function(world,startCube,targetCube){
     var currentCube = cloestCube;
     while(!xyzMatch(currentCube,startCube)){        
         var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
-        path.push(fromDirection);
+        path.push(fromDirection - 1000);
         if(fromDirection == fromRight){
             currentCube = canGoRight(currentCube,world);
         }
@@ -183,8 +186,14 @@ var getPath2 = function(world,startCube,targetCube){
 //x - 1
 function canGoLeft(cube,world){
     
-    var nextCube = cube;
-    nextCube = cube;
+    var nextCube = new Object();
+    nextCube.x = cube.x;
+    nextCube.y = cube.y;
+    nextCube.z = (cube.z+indexOffset)%zLength;
+    var currentZindex = nextCube.z;
+    var up1Zindex = (nextCube.z + 1)%zLength;
+    var up2Zindex = (nextCube.z + 2)%zLength;
+    var down1Zindex = (nextCube.z - 1)%zLength;
     nextCube.x -= 1;
     
     if(cube.x-1<bounds.minX){
@@ -192,18 +201,18 @@ function canGoLeft(cube,world){
         return nextCube;
     }
     
-    if((cube.z=-1||world[cube.x-1][cube.y][cube.z]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+    if((cube.z=-1||world[cube.x-1][cube.y][nextCube.z]>=1)&&world[cube.x-1][cube.y][up1Zindex]==0){
         
         return nextCube;
     }
     
-    if(cube.z>-1&&world[cube.x-1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x-1][cube.y][cube.z-1]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+    if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]==0){
         
         nextCube.z -= 1;
         return nextCube;
     }
     
-    if(world[cube.x-1][cube.y][cube.z+1]>=1&&world[cube.x-1][cube.y][cube.z+2]==0){
+    if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]==0){
         nextCube.z += 1;
         return nextCube;
     }
@@ -218,8 +227,13 @@ function canGoLeft(cube,world){
 //x+1
 function canGoRight(cube,world){
     
-    var nextCube = cube;
-    nextCube = cube;
+    var nextCube = new Object();
+    nextCube.x = cube.x;
+    nextCube.y = cube.y;
+    nextCube.z = (cube.z+indexOffset)%zLength;
+    var up1Zindex = (nextCube.z + 1)%zLength;
+    var up2Zindex = (nextCube.z + 2)%zLength;
+    var down1Zindex = (nextCube.z - 1)%zLength;
     nextCube.x += 1;
     
     if(cube.x+1>bounds.maxX){
@@ -227,18 +241,18 @@ function canGoRight(cube,world){
         return nextCube;
     }
     
-    if((cube.z=-1||world[cube.x+1][cube.y][cube.z]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+    if((cube.z=-1||world[cube.x+1][cube.y][nextCube.z]>=1)&&world[cube.x+1][cube.y][up1Zindex]==0){
         
         return nextCube;
     }
     
-    if(cube.z>-1&&world[cube.x+1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x+1][cube.y][cube.z-1]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+    if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]==0){
         
         nextCube.z -= 1;
         return nextCube;
     }
     
-    if(world[cube.x+1][cube.y][cube.z+1]>=1&&world[cube.x+1][cube.y][cube.z+2]==0){
+    if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]==0){
         nextCube.z += 1;
         return nextCube;
     }
@@ -253,8 +267,13 @@ function canGoRight(cube,world){
 //y-1
 function canGoUp(cube,world){
     
-    var nextCube = cube;
-    nextCube = cube;
+    var nextCube = new Object();
+    nextCube.x = cube.x;
+    nextCube.y = cube.y;
+    nextCube.z = (cube.z+indexOffset)%zLength;
+    var up1Zindex = (nextCube.z + 1)%zLength;
+    var up2Zindex = (nextCube.z + 2)%zLength;
+    var down1Zindex = (nextCube.z - 1)%zLength;
     nextCube.y -= 1;
     
     if(cube.y-1<bounds.minY){
@@ -262,18 +281,18 @@ function canGoUp(cube,world){
         return nextCube;
     }
     
-    if((cube.z=-1||world[cube.x][cube.y-1][cube.z]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+    if((cube.z=-1||world[cube.x][cube.y-1][nextCube.z]>=1)&&world[cube.x][cube.y-1][up1Zindex]==0){
         
         return nextCube;
     }
     
-    if(cube.z>-1&&world[cube.x][cube.y-1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y-1][cube.z-1]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+    if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]==0){
         
         nextCube.z -= 1;
         return nextCube;
     }
     
-    if(world[cube.x][cube.y-1][cube.z+1]>=1&&world[cube.x][cube.y-1][cube.z+2]==0){
+    if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]==0){
         nextCube.z += 1;
         return nextCube;
     }
@@ -289,8 +308,13 @@ function canGoUp(cube,world){
 //y+1
 function canGoDown(cube,world){
     
-    var nextCube = cube;
-    nextCube = cube;
+    var nextCube = new Object();
+    nextCube.x = cube.x;
+    nextCube.y = cube.y;
+    nextCube.z = (cube.z+indexOffset)%zLength;
+    var up1Zindex = (nextCube.z + 1)%zLength;
+    var up2Zindex = (nextCube.z + 2)%zLength;
+    var down1Zindex = (nextCube.z - 1)%zLength;
     nextCube.y += 1;
     
     if(cube.y+1<bounds.maxY){
@@ -298,18 +322,18 @@ function canGoDown(cube,world){
         return nextCube;
     }
     
-    if((cube.z=-1||world[cube.x][cube.y+1][cube.z]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+    if((cube.z=-1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]==0){
         
         return nextCube;
     }
     
-    if(cube.z>-1&&world[cube.x][cube.y+1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y+1][cube.z-1]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+    if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]==0){
         
         nextCube.z -= 1;
         return nextCube;
     }
     
-    if(world[cube.x][cube.y+1][cube.z+1]>=1&&world[cube.x][cube.y+1][cube.z+2]==0){
+    if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]==0){
         nextCube.z += 1;
         return nextCube;
     }
@@ -358,7 +382,8 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 		if(newY == curHigestReward.y){
 			newY+=1;
 		}
-
+        
+        var newZ = curHigestReward.z;
 		newZ += Math.random()*heightDeltaRange;
 
 		curHigestReward.x = newX;
