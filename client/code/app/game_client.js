@@ -242,7 +242,7 @@ function gameboard_init() {
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
 	var waterMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true} );
-	waterMaterial.depthTest = false;
+	waterMaterial.depthWrite = false;
 	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), waterMaterial);
 	movingPlane.y = -100;
 	movingPlane.rotation.x = - Math.PI / 2;
