@@ -51,6 +51,15 @@ var rewardHash = new Array();
 var unCountedObjectArray;
 var previousIndex;
 
+var mouseXOnMouseDown = 0;
+var mouseX = 0;
+var windowHalfX = window.innerWidth / 2;
+var windowHalfY = window.innerHeight / 2;
+var targetRotationOnMouseDown = 0;
+var targetRotation = 0;
+var mouseDown = false;
+
+
 $(document).ready(function() {
 	//ev.preventDefault();
 	signIn();
@@ -209,8 +218,9 @@ function gameboard_init() {
 	plane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
-	
-	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true } ) );
+	var waterMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true} );
+	waterMaterial.depthTest = false;
+	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), waterMaterial);
 	movingPlane.y = -100;
 	movingPlane.rotation.x = - Math.PI / 2;
 	scene.add( movingPlane );
@@ -242,6 +252,8 @@ function gameboard_init() {
 
 	document.addEventListener( 'keydown', onDocumentKeyDown, false );
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
+	document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+	document.addEventListener( 'touchmove', onDocumentTouchMove, false );
 
 	$(window).keypress(function(e){
 		var new_position = new Object();
@@ -303,6 +315,8 @@ function signIn() {
 	});
 }
 function onWindowResize() {
+	windowHalfX = window.innerWidth / 2;
+	windowHalfY = window.innerHeight / 2;
 
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
@@ -372,6 +386,8 @@ function setVoxelPosition( intersector ) {
 	
 	if (index.x == playerPosition.x && index.y == playerPosition.y && index.z == playerPosition.z)
 		return;
+	if (index.x >= gridCellNumber || index.y >= gridCellNumber)
+		return;
 	
 	for (var i = 0; i < unCountedObjectArray.length; i++){
 		var object = unCountedObjectArray[i];
@@ -384,8 +400,13 @@ function setVoxelPosition( intersector ) {
 }
 
 function onDocumentMouseMove( event ) {
-
 	event.preventDefault();
+	if (mouseDown) {
+		mouseX = event.clientX - windowHalfX;
+		targetRotation = targetRotationOnMouseDown
+				+ (mouseX - mouseXOnMouseDown) * 0.02;
+	}
+	
 
 	mouse2D.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	mouse2D.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
@@ -417,6 +438,12 @@ function onDocumentMouseMove( event ) {
 function onDocumentMouseDown( event ) {
 
 	event.preventDefault();
+	
+	mouseDown = true;
+	document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+	document.addEventListener( 'mouseout', onDocumentMouseOut, false );
+	mouseXOnMouseDown = event.clientX - windowHalfX;
+	targetRotationOnMouseDown = targetRotation;
 
 	var intersects = raycaster.intersectObjects( scene.children );
 	intersector = getRealIntersector( intersects );
@@ -442,17 +469,52 @@ function onDocumentMouseDown( event ) {
 			tmpVec.applyMatrix3( normalMatrix ).normalize();
 
 			// Convert into matrix index and call addVoxel function to add
-			var index = new Object();
+			/*var index = new Object();
 			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
 			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
-			index.z = Math.floor( voxelPosition.y / gridCellSize );
-			if (index.x == previousIndex.x && index.y == previousIndex.y && index.z == previousIndex.z){
-				ss.rpc('demo.clientMove', [1, index, cubecolor], roomNumber);
+			index.z = Math.floor( voxelPosition.y / gridCellSize );*/
+			if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
+				previousIndex = rollOverMesh.index;
+				ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
 			} else{
-				previousIndex = index;
+				previousIndex = rollOverMesh.index;
 			}
 		}
 	}
+}
+
+function onDocumentMouseUp( event ) {
+	mouseDown = false;
+}
+
+function onDocumentMouseOut( event ) {
+	mouseDown = false;
+}
+
+function onDocumentTouchStart( event ) {
+
+	if ( event.touches.length === 1 ) {
+
+		//event.preventDefault();
+
+		mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
+		targetRotationOnMouseDown = targetRotation;
+
+	}
+
+}
+
+function onDocumentTouchMove( event ) {
+
+	if ( event.touches.length === 1 ) {
+
+		event.preventDefault();
+
+		mouseX = event.touches[ 0 ].pageX - windowHalfX;
+		targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
+
+	}
+
 }
 
 function onDocumentKeyDown( event ) {
@@ -512,6 +574,8 @@ function render() {
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 	waterFlow(waterPosition);
+	
+	theta = -targetRotation * 10;
 
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
