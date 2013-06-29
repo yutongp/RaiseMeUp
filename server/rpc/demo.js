@@ -47,6 +47,7 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 			newY+=1;
 		}
 
+		var newZ;
 		newZ += Math.random()*heightDeltaRange;
 
 		curHigestReward.x = newX;
@@ -99,7 +100,7 @@ exports.actions = function(req, res, ss) {
 		},
 
 		requireReward: function(numReward, lastReward, channel) {
-			ss.publish.channel(channel, 'addRewardlist', getReward(numReward, lastReward));
+			ss.publish.channel(channel, 'addRewardlist', getRewardCubePosition(numReward, lastReward));
 		},
 
 	};
