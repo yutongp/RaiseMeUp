@@ -388,6 +388,47 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 	return rewardCubes;
 }
 
+//input is index in the world index
+var getRewardCubePosition = function (curHigestReward,indexOffset){
+	rewardCubes = new Array();
+    var count = 0;
+    var max;
+    if(curHigestReward.z<indexOffset){
+        max = indexOffset - curHigestReward.z -1;
+    }else{
+        max = zlength - (curHigestReward.z - indexOffset + 1);
+    }
+
+	var temp = new Object();
+	temp = curHigestReward;
+	for( var i = 0;; i++){
+        
+		var newX = Math.floor(Math.random()*(bounds.maxX-bounds.minX))+bounds.minX;
+		var newY = Math.floor(Math.random()*(bounds.maxY-bounds.minY))+bounds.minY;
+		if(newX == temp.x){
+			newX+=1;
+		}
+		if(newY == temp.y){
+			newY+=1;
+		}
+        
+		var newZ = temp.z;
+		newZ += Math.floor(Math.random()*heightDeltaRange);
+        count += newZ - temp.z;
+        if(count>max)
+            break;
+        newZ = (newZ + indexOffset)%zLength;
+        
+        
+		temp = new Object();
+		temp.x = newX;
+		temp.y = newY;
+		temp.z = newZ;
+		rewardCubes[i] = temp;
+	}
+	return rewardCubes;
+}
+
 
 
 exports.actions = function(req, res, ss) {
