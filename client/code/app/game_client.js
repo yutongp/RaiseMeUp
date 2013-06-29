@@ -40,6 +40,9 @@ var bonusGeo;
 var bonusMaterial;
 
 var initialTime;
+var startTime = 0;
+var countdownSecond = 10;
+var clock;
 
 $(document).ready(function() {
 	signIn();
@@ -87,8 +90,17 @@ function requireReward(numReward, lastReward) {
 	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
 }
 
+function gameCountDown() {
+	countdownSecond --;
+	if (countdownSecond >= 0)
+		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br><br>';
+	else {
+		$('#countDown').attr('style','display: none;');
+		clock=window.clearInterval(clock);
+	}		
+}
+
 function gameboard_init() {
-	initialTime = Date.now();
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
@@ -109,8 +121,11 @@ function gameboard_init() {
 
 	var info = document.createElement('div');
 	info.id = 'info';
-	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a>';
+	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="countDown">Start flooding in...<br><a id="countSecond">10<br><br></a>';
 	container.appendChild(info);
+
+	initialTime = Date.now();
+	clock=self.setInterval(function(){gameCountDown()},1000);
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
@@ -164,7 +179,7 @@ function gameboard_init() {
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
 	
-	movingPlane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
+	movingPlane = new  THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber), new THREE.MeshBasicMaterial( { color: 0x08298a } ) );
 	movingPlane.rotation.x = - Math.PI / 2;
 	scene.add( movingPlane );
 
@@ -389,16 +404,27 @@ function render() {
 		}
 
 	}
-	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
-	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
-	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
-	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
-	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
 	
-	movingPlane.position.y = currentWaterHeight;
-	
-	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
-	renderer.render( scene, camera );
+	if (Date.now() - initialTime > 10000) {
+		if (startTime == 0)
+			startTime = Date.now();
+		var currentWaterHeight = (Date.now() - startTime ) * SPEED;
+		waterPosition = Math.floor(currentWaterHeight / gridCellSize);
+		camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+		camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+		camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
+		movingPlane.position.y = currentWaterHeight;
+		camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
+		renderer.render( scene, camera );
+	}
+	else {
+		camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+                camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+                camera.position.y = INITIAL_CAMERA_HEIGHT;
+		camera.lookAt( new THREE.Vector3(0,0,0));
+		renderer.render( scene, camera );
+	}
+
 
 }
 
