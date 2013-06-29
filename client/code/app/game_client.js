@@ -22,7 +22,7 @@ var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMat
 var cubeGeo, cubeMaterial;
 var i, intersector;
 var playerName, roomNumber, blocksLeft;
-var cubecolor;
+var cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
@@ -124,6 +124,15 @@ function gameInit() {
 		}
 	});
 
+	ss.event.on('newPlayerIn', function(playern, playerc, channelNumber) {
+		if (playern != playerName) {
+			if (window.innerWidth > 600) {
+				document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+playerc.substring(2)+';">'+playern+'</a>';	
+			}
+		}
+	});
+
+
 	ss.event.on('moveBot', function(data, channelNumber) {
 		movePlayer(data);
 	});
@@ -131,7 +140,7 @@ function gameInit() {
 
 function setSocket() {
 	initialTime = Date.now();
-	ss.rpc('demo.connectGame', playerName, roomNumber,initialTime, function(initData, first) {
+	ss.rpc('demo.connectGame', playerName, cubecolor, roomNumber,initialTime, function(initData, first) {
 		firstPlayer = first;
 		blocksLeft = initData;
 		gameboard_init();
@@ -175,7 +184,7 @@ function gameboard_init() {
 	if (firstPlayer == true) {
 		requireReward(5, playerPosition);
 	} else {
-		ss.rpc('demo.syncWorld', roomNumber, function(worldData){
+		ss.rpc('demo.syncWorld', playerName, cubecolor, roomNumber, function(worldData){
 			initialTime = worldData.initTime;
 			console.log(initialTime);
 			for (var i = 0; i<gridCellNumber; i++) {
@@ -211,6 +220,14 @@ function gameboard_init() {
 								rewardHash.push(addBonus(n));
 							}
 						}
+					}
+				}
+				if (window.innerWidth > 600)
+					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
+				for ( var m = 0;  m < worldData.players.length; m++) {
+
+					if (window.innerWidth > 600) {
+						document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+playerc.substring(2)+';">'+playern+'</a>';	
 					}
 				}
 			}
@@ -256,8 +273,7 @@ function gameboard_init() {
 	//}
 
 	//console.log(parseFloat(cubecolorfeed));
-	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
-	if (window.innerWidth > 500)
+	if (window.innerWidth > 600)
 		document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
 
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
@@ -795,7 +811,7 @@ function checkReward(position) {
 		for (i = 0; i < rewardHash.length; i++) {
 				console.log("sadasdadsadas,");
 				if (rewardHash[i] != undefined) {
-					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == WorldztoAbsoz(position.z)) {
+					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == position.z) {
 						scene.remove(rewardHash[i]);
 						rewardHash[i] = undefined;
 					}

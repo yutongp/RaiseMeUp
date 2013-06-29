@@ -486,7 +486,7 @@ exports.actions = function(req, res, ss) {
 				return res(true);
 			},
 
-			connectGame: function(playerName, roomNumber, initialTime) {
+			connectGame: function(playerName, playerColor, roomNumber, initialTime) {
 				var first = false;
 				if (roomMap[roomNumber] == undefined) {
 					roomMap[roomNumber] = new Room(roomNumber, initialTime);
@@ -495,6 +495,7 @@ exports.actions = function(req, res, ss) {
 
 				thisRoom = roomMap[roomNumber];
 				thisRoom.players.push(playerName);
+				thisRoom.playercolors.push(playerColor);
 				req.session.channel.subscribe(roomNumber);
 				ss.publish.channel(roomNumber, 'addPlayer', playerName);
 				req.session.setUserId(playerName);
@@ -530,8 +531,9 @@ exports.actions = function(req, res, ss) {
 			getRewardNum: function(currentReward, nextReward, channel) {
 			},
 
-			syncWorld: function(channel) {
-				 return res(roomMap[channel]);
+			syncWorld: function(playerName, playerColor, channel) {
+				ss.publish.channel(channel, 'newPlayerIn', playerName, playerColor);
+				return res(roomMap[channel]);
 			},
 
 	};
