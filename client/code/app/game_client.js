@@ -62,6 +62,15 @@ function gameboard_init() {
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
 
+
+	var info = document.createElement('div');
+	var height = window.innerHeight - 90;
+	info.id = 'info';
+	info.style.top = height.toString()+'px';
+	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left:</a></div>';
+	container.appendChild(info);
+
+
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
 
@@ -129,20 +138,26 @@ function gameboard_init() {
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
+
 }
 
 function signIn() {
 	$('#sign_up').lightbox_me({
-        	centered: true, 
-        	onLoad: function() { 
-			$('#sign_up').find('input:first').focus()},
-			onClose: function() {
-				playerName = $('input[name="player_name"]').val();
-				roomNumber = $('input[name="room_number"]').val();
-				gameInit();
-		},
-		closeSelector: ".confirm"
-        });
+	centered: true,
+	onLoad: function() {
+		$('#sign_up').find('input:first').focus()
+	},
+	onClose: function() {
+		if (playerName == '' || roomNumber == '') {
+			$('#emptyInput').attr('style','visibility: visible;');
+			signIn();
+		}
+		else {
+			gameInit();
+		}
+	},
+	closeSelector: ".confirm"
+	});
 }
 
 function onWindowResize() {
