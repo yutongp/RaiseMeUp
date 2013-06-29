@@ -54,6 +54,7 @@ $(document).ready(function() {
 	signIn();
 });
 
+
 function gameInit() {
 	setSocket();
 
@@ -232,6 +233,28 @@ function gameboard_init() {
 	window.addEventListener( 'resize', onWindowResize, false );
 }
 
+function signIn() {
+	$('#sign_up').lightbox_me({
+		centered: true,
+	onLoad: function() {
+		$('#sign_up').find('input:first').focus()
+	},
+	onClose: function() {
+		playerName = $('input[name="player_name"]').val();
+		roomNumber = $('input[name="room_number"]').val();
+		if (playerName == '' || roomNumber == '') {
+			$('#emptyInput').attr('style','visibility: visible;');
+			signIn();
+		}
+		else {
+			gameInit();
+		}
+	},
+	closeSelector: ".confirm"
+	});
+}
+
+
 function onWindowResize() {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
@@ -373,9 +396,10 @@ function render() {
 		}
 
 	}
-	var currentWaterheight = (Date.now() - initialTime ) * SPEED;
+	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 
+	console.log(waterPosition);
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
