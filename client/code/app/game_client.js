@@ -39,13 +39,25 @@ $(document).ready(function() {
 
 	// the whole area
 	hammertime.on("drag", function(ev) {
+		
 		ev.preventDefault();
-				    alert('you swiped!');
-				});
+	    //alert(hammertime.NO_MOUSE_EVENT);
+
+	});
+
+
+
 
 
 	signIn();
 });
+
+
+
+
+
+
+
 
 function gameInit() {
 	setSocket();
@@ -238,6 +250,10 @@ function signIn() {
 	closeSelector: ".confirm"
 	});
 }
+
+
+
+
 
 function signIn() {
 	$('#sign_up').lightbox_me({
