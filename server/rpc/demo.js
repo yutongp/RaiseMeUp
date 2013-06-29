@@ -207,12 +207,12 @@ function canGoLeft(cube,world){
 
 	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]==0){
 
-		nextCube.z -= 1;
+		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
 	if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]==0){
-		nextCube.z += 1;
+		nextCube.z = up1Zindex;
 		return nextCube;
 	}
 
@@ -244,12 +244,12 @@ function canGoRight(cube,world){
 
 	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]==0){
 
-		nextCube.z -= 1;
+		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
 	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]==0){
-		nextCube.z += 1;
+		nextCube.z = up1Zindex;
 		return nextCube;
 	}
 
@@ -282,12 +282,12 @@ function canGoUp(cube,world){
 
 	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]==0){
 
-		nextCube.z -= 1;
+		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
 	if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]==0){
-		nextCube.z += 1;
+		nextCube.z = up1Zindex;
 		return nextCube;
 	}
 
@@ -321,12 +321,12 @@ function canGoDown(cube,world){
 
 	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]==0){
 
-		nextCube.z -= 1;
+		nextCube.z  = down1Zindex;
 		return nextCube;
 	}
 
 	if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]==0){
-		nextCube.z += 1;
+		nextCube.z = up1Zindex;
 		return nextCube;
 	}
 
