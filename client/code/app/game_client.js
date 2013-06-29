@@ -17,6 +17,11 @@ var cubecolor
 var gridCellSize = 100;
 var gridCellNumber = 10;
 
+var playerPosition = new Object();
+var playerGeo;
+var playerMaterial;
+var player;
+
 $(document).ready(function() {
 	signIn();
 });
@@ -48,12 +53,16 @@ function gameInit() {
 function setSocket() {
 	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
 		blocksLeft = initData;
+		console.log(blocksLeft);
 	});
 
 }
 
 
 function gameboard_init() {
+	playerPosition.x = 0;
+	playerPosition.y = 0;
+	playerPosition.z = 0;
 
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
@@ -95,6 +104,12 @@ function gameboard_init() {
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	cubeMaterial.ambient = cubeMaterial.color;
 
+	playerGeo = new THREE.SphereGeometry(50,50,30);
+	playerMaterial = new THREE.MeshPhongMaterial( { color: 0xfeb700, ambient: 0xffffff, shading: THREE.FlatShading } );
+	player = new THREE.Mesh(playerGeo, playerMaterial);
+	player.matrixAutoUpdate = false;
+	movePlayer(playerPosition);
+	scene.add(player);
 	// picking
 
 	projector = new THREE.Projector();
@@ -312,21 +327,47 @@ function render() {
 
 }
 
-function addVoxel(index, materialColor) {
-	if (index.x < 0 || index.x >= gridCellNumber)
+function addVoxel(position, materialColor) {
+	if (position.x < 0 || position.x >= gridCellNumber)
 		return;
-	if (index.y < 0 || index.y >= gridCellNumber)
+	if (position.y < 0 || position.y >= gridCellNumber)
 		return;
-	if (index.z < 0) 
+	if (position.z < 0) 
 		return;
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0x00ff80, shading: THREE.FlatShading } );
 	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
-	var xCoordinate = index.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
-	var yCoordinate = index.z * gridCellSize + gridCellSize / 2;
-	var zCoordinate = index.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
+	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
+	
 	scene.add( voxel );
+}
+
+function movePlayer(position) {
+	if (position.x < 0 || position.x >= gridCellNumber)
+		return;
+	if (position.y < 0 || position.y >= gridCellNumber)
+		return;
+	if (position.z < 0) 
+		return;
+	var xMoved = Math.abs(position.x - playerPosition.x);
+	var yMoved = Math.abs(position.y - playerPosition.y);
+	if (xMoved + yMoved > 1)
+		return;
+	if (position.z < playerPosition.z || position.z - playerPosition.z > 1)
+		return;
+	
+	var gridSize = gridCellSize * gridCellNumber;
+	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
+	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
+	player.updateMatrix();
+	playerPosition.x = position.x;
+	playerPosition.y = position.y;
+	playerPosition.z = position.z;
 }
