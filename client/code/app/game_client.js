@@ -50,7 +50,7 @@ var unCountedObjectArray;
 var previousIndex;
 
 $(document).ready(function() {
-	ev.preventDefault();
+	//ev.preventDefault();
 	signIn();
 });
 
@@ -66,7 +66,7 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			if (getCellType(data[1]) == 0 && blocksLeft > 0) {				
+			if (getCellType(data[1]) == 0 && blocksLeft > 0) {
 				addVoxel( data[1], parseInt(data[2]) );
 				setWorldMap(data[1], VOXEL_CELL);
 				blocksLeft = blocksLeft - 1;
@@ -286,35 +286,6 @@ function signIn() {
 	closeSelector: ".confirm"
 	});
 }
-
-<<<<<<< HEAD
-=======
-
-
-
-
-function signIn() {
-	$('#sign_up').lightbox_me({
-		centered: true,
-	onLoad: function() {
-		$('#sign_up').find('input:first').focus()
-	},
-	onClose: function() {
-		playerName = $('input[name="player_name"]').val();
-		roomNumber = $('input[name="room_number"]').val();
-		if (playerName == '' || roomNumber == '') {
-			$('#emptyInput').attr('style','visibility: visible;');
-			signIn();
-		}
-		else {
-			gameInit();
-		}
-	},
-	closeSelector: ".confirm"
-	});
-}
->>>>>>> 2a3bfc42216038411fa515f9d5d53b800dd18c54
-
 function onWindowResize() {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
@@ -667,6 +638,7 @@ function addBonus( position ) {
 	scene.add( bonus );
 	unCountedObjectArray.push(bonus);
 	console.log(this, unCountedObjectArray);
+	return bonus;
 }
 
 
