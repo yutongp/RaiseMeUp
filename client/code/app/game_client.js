@@ -57,10 +57,12 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			addVoxel( data[1], parseInt(data[2]) );
-			setWorldMap(data[1], VOXEL_CELL);
-			blocksLeft = blocksLeft - 1;
-			document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+			if (getCellType(data[1]) == 0) {				
+				addVoxel( data[1], parseInt(data[2]) );
+				setWorldMap(data[1], VOXEL_CELL);
+				blocksLeft = blocksLeft - 1;
+				document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+			}
 		}
 	});
 
@@ -466,6 +468,11 @@ function waterFlow(waterPos) {
 function setWorldMap(position, type) {
 	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
 	worldMap[position.x][position.y][newZ] = type;
+}
+
+function getCellType(position) {
+	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	return worldMap[position.x][position.y][newZ];
 }
 
 function addBonus( position ) {
