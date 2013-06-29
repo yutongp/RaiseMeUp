@@ -115,11 +115,8 @@ function gameboard_init() {
 	document.body.appendChild( container );
 
 	var info = document.createElement('div');
-	var height = window.innerHeight - 90;
 	info.id = 'info';
-	info.style.top = height.toString()+'px';
-	//info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
-	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of blocks left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
+	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a>';
 	container.appendChild(info);
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -144,7 +141,7 @@ function gameboard_init() {
 
 	//console.log(parseFloat(cubecolorfeed));
 	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
-	document.getElementById('team').innerHTML = $('#team').html()+' <a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
+	document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
 
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
 
@@ -233,27 +230,6 @@ function gameboard_init() {
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
-}
-
-function signIn() {
-	$('#sign_up').lightbox_me({
-		centered: true,
-	onLoad: function() {
-		$('#sign_up').find('input:first').focus()
-	},
-	onClose: function() {
-		playerName = $('input[name="player_name"]').val();
-		roomNumber = $('input[name="room_number"]').val();
-		if (playerName == '' || roomNumber == '') {
-			$('#emptyInput').attr('style','visibility: visible;');
-			signIn();
-		}
-		else {
-			gameInit();
-		}
-	},
-	closeSelector: ".confirm"
-	});
 }
 
 function onWindowResize() {
