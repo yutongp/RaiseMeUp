@@ -55,6 +55,10 @@ $(document).ready(function() {
 
 function init() {
 
+	/*var info = document.createElement('div');
+        info.id = 'info';
+        document.body.appendChild(info);
+*/
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
@@ -66,6 +70,14 @@ function init() {
 	//info.style.textAlign = 'center';
 	//info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> - voxel painter - webgl<br><strong>click</strong>: add voxel, <strong>control + click</strong>: remove voxel, <strong>shift + click</strong>: rotate';
 	//container.appendChild( info );
+
+	var info = document.createElement('div');
+        var height = window.innerHeight - 90;
+	info.id = 'info';
+	info.style.top = height.toString()+'px';
+	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left:</a></div>';
+        container.appendChild(info);
+
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
@@ -126,6 +138,7 @@ function init() {
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
+
 }
 
 function signIn() {
@@ -136,8 +149,14 @@ function signIn() {
 		onClose: function() {
 			playerName = $('input[name="player_name"]').val();
 			roomNumber = $('input[name="room_number"]').val();
+			if (playerName == '' || roomNumber == ''){
+				$('#emptyInput').attr('style','visibility: visible;');
+				signIn();}
+			else {
 			init();
-			animate();},
+			animate();
+			}
+		},
 		closeSelector: ".confirm"
         });
 }
