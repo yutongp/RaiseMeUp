@@ -81,6 +81,7 @@ exports.actions = function(req, res, ss) {
 
 		clientMove: function(data, channel) {
 			ss.publish.channel(channel, 'addBox', data);
+			roomMap[channel].blocks--;
 			return res(true);
 		},
 

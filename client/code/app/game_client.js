@@ -149,6 +149,32 @@ function gameboard_init() {
 	document.addEventListener( 'keydown', onDocumentKeyDown, false );
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
+	$(window).keypress(function(e){
+		var new_position = new Object();
+		new_position.x = playerPosition.x;
+		new_position.y = playerPosition.y;
+		new_position.z = playerPosition.z;
+		switch (e.which) {
+			case 115:
+				console.log('down');
+				new_position.y++;
+				break;
+			case 119:
+				console.log('up');
+				new_position.y--;
+				break;
+			case 97:
+				console.log('left');
+				new_position.x--;
+				break;
+			case 100:
+				console.log('right');
+				new_position.x++;
+				break;
+			default:
+		}
+		movePlayer(new_position);
+	});
 	window.addEventListener( 'resize', onWindowResize, false );
 
 }
