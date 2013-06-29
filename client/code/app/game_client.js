@@ -118,7 +118,8 @@ function gameInit() {
 }
 
 function setSocket() {
-	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData, first) {
+	initialTime = Date.now();
+	ss.rpc('demo.connectGame', playerName, roomNumber,initialTime, function(initData, first) {
 		firstPlayer = first;
 		blocksLeft = initData;
 		gameboard_init();
@@ -153,7 +154,6 @@ function gameboard_init() {
 	previousIndex.y = 0;
 	previousIndex.z = 0;
 	unCountedObjectArray = new Array();
-	initialTime = Date.now();
 
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
@@ -170,7 +170,46 @@ function gameboard_init() {
 	if (firstPlayer == true) {
 		requireReward(5, playerPosition);
 	} else {
-		ss.rpc('syncWorld', roomNumber, function(worldData){
+		ss.rpc('demo.syncWorld', roomNumber, function(worldData){
+			initialTime = worldData.initTime;
+			console.log(initialTime);
+			for (var i = 0; i<gridCellNumber; i++) {
+				for (var j = 0; j<gridCellNumber; j++){
+					for (var k = 0; k<gridHeight; k++) {
+						worldMap[i][j][k] = worldData.worldMap[i][j][k];
+						if (worldData.worldMap[i][j][k] == VOXEL_CELL) {
+							var n = new Object();
+							n.x = i;
+							n.y = j;
+							n.z = k;
+							addVoxel(n);
+						} else if (worldData.worldMap[i][j][k] == PLAYER_CELL) {
+							var n = new Object();
+							n.x = i;
+							n.y = j;
+							n.z = k;
+							movePlayer(n);
+						} else if (worldData.worldMap[i][j][k] == BONUS_CELL) {
+							var n = new Object();
+							n.x = i;
+							n.y = j;
+							n.z = k;
+							var rewardin = false;
+							for (var r =0; r < rewardHash.length; r++) {
+								if (rewardHash[r] == undefined) {
+									rewardHash[r] = addBonus(n);
+									rewardin = true;
+									break;
+								}
+							}
+							if (!rewardin) {
+								rewardHash.push(addBonus(n));
+							}
+						}
+					}
+				}
+			}
+
 		});
 	}
 	container = document.createElement( 'div' );
@@ -187,7 +226,6 @@ function gameboard_init() {
 	container.appendChild(countdownBoard);
 	container.appendChild(info);
 
-	initialTime = Date.now();
 	clock=self.setInterval(function(){gameCountDown()},1000);
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
@@ -282,7 +320,7 @@ function gameboard_init() {
 		var new_position = new Object();
 		new_position.x = playerPosition.x;
 		new_position.y = playerPosition.y;
-		new_position.z = playerPosition.z - waterPosition - 1;
+		new_position.z = playerPosition.z - 1;
 		var next_position = new Object();
 		next_position.z = -2;
 		switch (e.which) {
@@ -318,7 +356,7 @@ function gameboard_init() {
 
 
 function movePlayerWrapper(new_position) {
-	new_position.z = (new_position.z-waterPosition) % gridHeight + worldIndex;
+	new_position.z = (new_position.z) % gridHeight + worldIndex;
 	ss.rpc("demo.botMove", new_position, roomNumber);
 }
 
@@ -711,22 +749,22 @@ function movePlayer(position) {
 function waterFlow(waterPos) {
 	//wrap world map
 	if ( waterPos - oldWaterPosition >=1 ) {
-		if (worldIndex + 1 == gridHeight)
-			worldIndex = 0;
-		else
-			worldIndex = worldIndex + 1;
+		//if (worldIndex + 1 == gridHeight)
+			//worldIndex = 0;
+		//else
+			//worldIndex = worldIndex + 1;
 		oldWaterPosition = waterPos;
 	}
 }
 
 function setWorldMap(position, type) {
-	var newZ = (position.z-waterPosition) % gridHeight + worldIndex;
+	var newZ = (position.z) % gridHeight + worldIndex;
 	worldMap[position.x][position.y][newZ] = type;
 }
 
 function checkReward(position) {
 
-	position.z = (position.z-waterPosition) % gridHeight + worldIndex;
+	position.z = (position.z) % gridHeight + worldIndex;
 	if (getCellType(position) == BONUS_CELL) {
 		var i = 0
 		for (i = 0; i < rewardHash.length; i++) {
@@ -735,7 +773,6 @@ function checkReward(position) {
 					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == WorldztoAbsoz(position.z)) {
 						scene.remove(rewardHash[i]);
 						rewardHash[i] = undefined;
-						requireReward(1, playerPosition);
 					}
 				}
 		}
@@ -751,7 +788,7 @@ function WorldztoAbsoz(wz) {
 }
 
 function getCellType(position) {
-	var newZ = (position.z-waterPosition) % gridHeight + worldIndex;
+	var newZ = (position.z) % gridHeight + worldIndex;
 	return worldMap[position.x][position.y][newZ];
 }
 
@@ -775,7 +812,6 @@ function addBonus( position ) {
 	bonus.index = position;
 	scene.add( bonus );
 	unCountedObjectArray.push(bonus);
-	console.log(this, unCountedObjectArray);
 	return bonus;
 }
 
@@ -802,7 +838,7 @@ function canGoLeft(cube, world, indexOffset, WaterOffset) {
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
+	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
@@ -850,7 +886,7 @@ function canGoRight(cube, world, indexOffset, WaterOffset) {
 	console.log(WaterOffset);
 
 
-	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
+	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
@@ -894,7 +930,7 @@ function canGoUp(cube, world, indexOffset, WaterOffset) {
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
+	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
@@ -935,7 +971,7 @@ function canGoDown(cube, world, indexOffset, WaterOffset) {
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
+	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
 
 		console.log(3);
 		nextCube.z  = down1Zindex;
