@@ -499,6 +499,7 @@ function render() {
 		}
 
 	}*/
+
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 	waterFlow(waterPosition);
