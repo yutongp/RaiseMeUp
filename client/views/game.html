@@ -15,14 +15,30 @@
 			#oldie { background-color: #ddd !important }
 		</style>
 		<SocketStream/>
+
+		<script>
+			function playsound(){
+				document.getElementById('audio').play();
+		  	}		
+		</script>
 	</head>
 	<body>
+
+		<!-- Background Audio -->
+		<script>
+			var sound = new Howl({
+	  		urls: ['http://upload.wikimedia.org/wikipedia/en/e/e5/Audio_example_2-2_vs_4-4.ogg']
+	  		}).play();
+		</script>
+		<audio src="http://upload.wikimedia.org/wikipedia/en/e/e5/Audio_example_2-2_vs_4-4.ogg"  autoplay loop type="audio/ogg"></audio>
+
+
+
 		<script src="http://threejs.org/build/three.min.js"></script>
 		<script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
 		<script src="http://threejs.org/examples/js/Detector.js"></script>
 
 		<script>
-
 			jQuery(function(){
 				var gameclient = require('./game_client.js');
 			});
