@@ -11,7 +11,7 @@ var rollOverMesh, rollOverMaterial;
 var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
 var cubeGeo, cubeMaterial;
 var i, intersector;
-var playerName, roomNumber;
+var playerName, roomNumber, blocksLeft;
 var cubecolor
 
 var gridCellSize = 100;
@@ -46,11 +46,8 @@ function gameInit() {
 
 
 function setSocket() {
-	ss.rpc('demo.connectGame', playerName, roomNumber, function(err) {
-		if(err) {
-			console.log("connect FAILED");
-		} else {
-		}
+	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
+		blocksLeft = initData;
 	});
 
 }
