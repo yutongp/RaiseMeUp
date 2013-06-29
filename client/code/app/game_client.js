@@ -19,9 +19,6 @@ var gridCellNumber = 10;
 
 $(document).ready(function() {
 	signIn();
-	setSocket();
-	
-
 });
 
 function setSocket() {
@@ -31,6 +28,7 @@ function setSocket() {
 		} else {
 		}
 	});
+
 }
 
 
@@ -122,43 +120,24 @@ function signIn() {
         	centered: true, 
         	onLoad: function() { 
 			$('#sign_up').find('input:first').focus()},
-		onClose: function() {
-			playerName = $('input[name="player_name"]').val();
-			roomNumber = $('input[name="room_number"]').val();
-			setSocket();
-			init();
-			animate();
-			ss.event.on('addBox', function(data, channelNumber) {
-				if (data[0] == 0) {
-					//from function onDocumentMouseDown
-					if ( data[1] != plane ) {
+			onClose: function() {
+				playerName = $('input[name="player_name"]').val();
+				roomNumber = $('input[name="room_number"]').val();
+				setSocket();
+				init();
+				animate();
 
-						scene.remove( data[1] );
-
+				ss.event.on('addBox', function(data, channelNumber) {
+					if (data[0] == 0) {
+						//from function onDocumentMouseDown
+						if ( data[1] != plane ) {
+							scene.remove( data[1] );
+						}
 					}
-				}
-
-				if (data[0] == 1) {
-					//from function setVoxelPosition
-					normalMatrix.getNormalMatrix( data[1] );
-
-					tmpVec.copy( data[2] );
-					tmpVec.applyMatrix3( normalMatrix ).normalize();
-
-					voxelPosition.addVectors( data[3], tmpVec );
-
-					voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
-					voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
-					voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
-
-					//from function onDocumentMouseDown
-					var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-					voxel.position.copy( voxelPosition );
-					voxel.matrixAutoUpdate = false;
-					voxel.updateMatrix();
-					scene.add( voxel );
-				}
-			});
+					if (data[0] == 1) {
+						addVoxel( data[1], parseInt(data[2]) );
+					}
+				});
 		},
 		closeSelector: ".confirm"
         });
@@ -235,17 +214,18 @@ function onDocumentMouseDown( event ) {
 			// delete cube
 			ss.rpc('demo.clientMove', [0, intersector.object], roomNumber);
 		} else {
-			//intersector = getRealIntersector( intersects );
-			//setVoxelPosition( intersector );
-			//var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-			//voxel.position.copy( voxelPosition );
-			//voxel.matrixAutoUpdate = false;
-			//voxel.updateMatrix();
-			//scene.add( voxel );
-
 			// create cube
-			ss.rpc('demo.clientMove', [1, intersector.object.matrixWorld
-					, intersector.face.normal, intersector.point], roomNumber);
+			normalMatrix.getNormalMatrix( intersector.object.matrixWorld );
+
+			tmpVec.copy( intersector.face.normal );
+			tmpVec.applyMatrix3( normalMatrix ).normalize();
+			
+			// Convert into matrix index and call addVoxel function to add
+			var index = new Object();
+			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
+			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
+			index.z = Math.floor( voxelPosition.y / gridCellSize );
+			ss.rpc('demo.clientMove', [1, index, cubecolor], roomNumber);
 		}
 	}
 }
@@ -314,4 +294,23 @@ function render() {
 
 	renderer.render( scene, camera );
 
+}
+
+function addVoxel(index, materialColor) {
+	if (index.x < 0 || index.x >= gridCellNumber)
+		return;
+	if (index.y < 0 || index.y >= gridCellNumber)
+		return;
+	if (index.z < 0) 
+		return;
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0x00ff80, shading: THREE.FlatShading } );
+	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+	var gridSize = gridCellSize * gridCellNumber;
+	var xCoordinate = index.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var yCoordinate = index.z * gridCellSize + gridCellSize / 2;
+	var zCoordinate = index.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
+	voxel.matrixAutoUpdate = false;
+	voxel.updateMatrix();
+	scene.add( voxel );
 }
