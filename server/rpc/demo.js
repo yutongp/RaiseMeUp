@@ -9,6 +9,8 @@ var fromLeft = 1001; // x + 1
 var fromRight = 1002;// x - 1
 var fromUp = 1003;// y + 1;
 var fromBot = 1004;// y - 1
+var fromNothing = 1005;
+
 
 var roomMap = {}
 
@@ -19,15 +21,12 @@ function Room (roomn) {
 }
 
 
-
-
 var getPath = function(world,startCube,targetCube){
     //0 >; 1 ^ ; 2 < ; v
     path = [];
     queue = [];
     queue.push(startCube);
-    startCube.visited = true;
-    var visited = world;
+    world[startCube.x][startCube.y][startCube.z] = fromNothing;
     
     
     
@@ -35,7 +34,7 @@ var getPath = function(world,startCube,targetCube){
         var cube = queue.shift();
         if(xyzMatch(cube,targetCube)){
             var currentCube = cube;
-            while(xyzMatch(currentCube,startCube)){
+            while(!xyzMatch(currentCube,startCube)){
                 var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
                 path.push(fromDirection);
                 if(fromDirection == fromRight){
@@ -53,9 +52,9 @@ var getPath = function(world,startCube,targetCube){
                 if(fromDirection == fromUp){
                     currentCube = canGoUp(currentCube,world);
                 }
-                return path;
+                
             }        
-            
+            return path;
         }else{
             
             
@@ -88,9 +87,98 @@ var getPath = function(world,startCube,targetCube){
     
     }
 
+    return path;
 
 
 }
+
+
+
+
+var getPath2 = function(world,startCube,targetCube){
+    //0 >; 1 ^ ; 2 < ; v
+    queue = [];
+    queue.push(startCube);
+    world[startCube.x][startCube.y][startCube.z] = fromNothing;
+    
+    var cloestCube = startCube;
+    var minDist = 9999;
+    
+    
+    while(queue.length!=0){
+        var cube = queue.shift();
+        
+        var dist = blocksNeedBetweenTwoReward(cube,targetCube)
+        if(minDist > dist){
+            minDist = dist;
+            cloestCube = cube;
+        }
+        if(xyzMatch(cube,targetCube)){
+            cloestCube = cube;
+            break;           
+        }else{
+            
+            
+            var nextCube = canGoLeft(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
+                queue.push(nextCube);               
+            }
+            
+            nextCube = canGoRight(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
+                queue.push(nextCube);
+                
+            }
+            
+            nextCube = canGoUp(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
+                queue.push(nextCube);
+            }
+            
+            nextCube = canGoDown(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
+                queue.push(nextCube);
+            }
+            
+            
+        }
+        
+    }
+    
+    path = [];
+    var currentCube = cloestCube;
+    while(!xyzMatch(currentCube,startCube)){        
+        var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
+        path.push(fromDirection);
+        if(fromDirection == fromRight){
+            currentCube = canGoRight(currentCube,world);
+        }
+        
+        if(fromDirection == fromLeft){
+            currentCube = canGoLeft(currentCube,world);
+        }
+        
+        if(fromDirection == fromBot){
+            currentCube = canGoDown(currentCube,world);
+        }
+        
+        if(fromDirection == fromUp){
+            currentCube = canGoUp(currentCube,world);
+        }
+        
+    }
+    
+    return path;
+    
+    
+}
+
+
+
 
 //x - 1
 function canGoLeft(cube,world){
@@ -127,6 +215,7 @@ function canGoLeft(cube,world){
 
 }
 
+//x+1
 function canGoRight(cube,world){
     
     var nextCube = cube;
@@ -161,6 +250,7 @@ function canGoRight(cube,world){
     
 }
 
+//y-1
 function canGoUp(cube,world){
     
     var nextCube = cube;
@@ -195,6 +285,8 @@ function canGoUp(cube,world){
     
 }
 
+
+//y+1
 function canGoDown(cube,world){
     
     var nextCube = cube;
