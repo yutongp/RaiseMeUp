@@ -16,6 +16,9 @@ var cubecolor
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
+var gridHeight = 11;
+var worldMap = new Array();
+var waterPosition = 0;
 
 var playerPosition = new Object();
 var playerGeo;
@@ -39,6 +42,7 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			addVoxel( data[1], parseInt(data[2]) );
+			worldMap[data[1].x][data[1].y][data[1].z] = 1;
 			blocksLeft = blocksLeft - 1;
 			document.getElementById('blockNum').innerHTML = blocksLeft.toString();		
 		}
@@ -58,11 +62,19 @@ function setSocket() {
 	});
 }
 
-
 function gameboard_init() {
+	for (var i = 0; i<gridCellNumber; i++) {
+		worldMap[i] = new Array();
+		for (var j = 0; j<gridCellNumber; j++){
+			worldMap[i][j] = new Array(); 
+			for (var k = 0; k<gridHeight; k++)
+				worldMap[i][j][k] = 0;
+		}
+	}
 	playerPosition.x = 0;
-	playerPosition.y = 0;
-	playerPosition.z = 0;
+        playerPosition.y = 0;
+        playerPosition.z = 0;
+	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = -1;
 
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
@@ -73,7 +85,8 @@ function gameboard_init() {
 	var height = window.innerHeight - 90;
 	info.id = 'info';
 	info.style.top = height.toString()+'px';
-	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
+	//info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
+	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of blocks left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
 	container.appendChild(info);
 	
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -394,4 +407,13 @@ function movePlayer(position) {
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
+	alert(position.x);
+	alert(position.y);alert(position.z);
+	worldMap[position.x][position.y][position.z] = -1;
+}
+
+function waterFlow() {
+	if (waterPosition+1 == gridHeight)
+		waterPosition = 0;
+	else waterPosition ++;	
 }
