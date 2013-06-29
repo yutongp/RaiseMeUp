@@ -43,7 +43,22 @@ var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 
 var initialTime;
 
+var unCountedObjectArray;
+var previousIndex;
+
 $(document).ready(function() {
+
+	//var hammertime = $(document).hammer();
+
+/*	// the whole area
+	hammertime.on("drag", function(ev) {
+				console.log(this, ev);
+				ev.preventDefault();
+				theta += -ev.gesture.deltaX * 150/ ev.currentTarget.documentElement.clientWidth ;
+				    //alert(ev.gesture.deltaX + ":" + ev.currentTarget.documentElement.clientWidth);
+				});*/
+
+
 	signIn();
 });
 
@@ -90,6 +105,11 @@ function requireReward(numReward, lastReward) {
 }
 
 function gameboard_init() {
+	previousIndex = new Object();
+	previousIndex.x = 0;
+	previousIndex.y = 0;
+	previousIndex.z = 0;
+	unCountedObjectArray = new Array();
 	initialTime = Date.now();
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
@@ -125,6 +145,7 @@ function gameboard_init() {
 	rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
 	rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
 	scene.add( rollOverMesh );
+	console.log(this, rollOverMesh);
 
 	// cubes
 
@@ -166,9 +187,11 @@ function gameboard_init() {
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
 	
-	movingPlane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
+	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true } ) );
+	movingPlane.y = -100;
 	movingPlane.rotation.x = - Math.PI / 2;
 	scene.add( movingPlane );
+	//unCountedObjectArray.push(movingPlane);
 
 	mouse2D = new THREE.Vector3( 0, 10000, 0.5 );
 
@@ -273,12 +296,24 @@ function getRealIntersector( intersects ) {
 	for( i = 0; i < intersects.length; i++ ) {
 
 		intersector = intersects[ i ];
-
-		if ( intersector.object != rollOverMesh && intersector.object != movingPlane) {
-
-			return intersector;
-
+		if (intersector.object == movingPlane)
+			continue;
+		if (intersector.object == player)
+			continue;
+		if (intersector.object == rollOverMesh)
+			continue;
+		var check = 1;
+		for (var j = 0; j < unCountedObjectArray.length; j++){
+			
+			if (intersector.object == unCountedObjectArray[j]){
+				
+				check = 0;
+				break;
+				
+			}
 		}
+		if (check == 1)
+			return intersector;
 
 	}
 
@@ -287,17 +322,43 @@ function getRealIntersector( intersects ) {
 }
 
 function setVoxelPosition( intersector ) {
+	var tmpPosition = new THREE.Vector3();
 
 	normalMatrix.getNormalMatrix( intersector.object.matrixWorld );
 
 	tmpVec.copy( intersector.face.normal );
 	tmpVec.applyMatrix3( normalMatrix ).normalize();
 
-	voxelPosition.addVectors( intersector.point, tmpVec );
+	tmpPosition.addVectors( intersector.point, tmpVec );
 
-	voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
-	voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
-	voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
+	var centerPosition = new THREE.Vector3();
+	
+	centerPosition.x = Math.floor( tmpPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
+	centerPosition.y = Math.floor( tmpPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
+	centerPosition.z = Math.floor( tmpPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
+/*	
+	if (Math.abs(centerPosition.x - tmpPosition.x) > (7 / 16) * gridCellSize)
+		return;
+	if (Math.abs(centerPosition.y - tmpPosition.y) > (4 / 8) * gridCellSize)
+		return;
+	if (Math.abs(centerPosition.z - tmpPosition.z) > (7 / 16) * gridCellSize)
+		return;
+	*/
+	var index = new Object();
+	index.x = Math.floor( tmpPosition.x / gridCellSize ) + gridCellNumber / 2;
+	index.y = Math.floor( tmpPosition.z / gridCellSize ) + gridCellNumber / 2;
+	index.z = Math.floor( tmpPosition.y / gridCellSize );
+	
+	if (index.x == playerPosition.x && index.y == playerPosition.y && index.z == playerPosition.z)
+		return;
+	
+	for (var i = 0; i < unCountedObjectArray.length; i++){
+		var object = unCountedObjectArray[i];
+		if (index.x == object.index.x && index.y == object.index.y && index.z == object.index.z)
+			return;
+	}
+	
+	voxelPosition = centerPosition;
 
 }
 
@@ -308,6 +369,28 @@ function onDocumentMouseMove( event ) {
 	mouse2D.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	mouse2D.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
+	raycaster = projector.pickingRay( mouse2D.clone(), camera );
+
+	var intersects = raycaster.intersectObjects( scene.children );
+
+	if ( intersects.length > 0 ) {
+
+		intersector = getRealIntersector( intersects );
+		if ( intersector ) {
+
+			setVoxelPosition( intersector );
+			rollOverMesh.position = voxelPosition;
+			
+			var index = new Object();
+			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
+			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
+			index.z = Math.floor( voxelPosition.y / gridCellSize );
+			
+			rollOverMesh.index = index;
+
+		}
+
+	}
 }
 
 function onDocumentMouseDown( event ) {
@@ -320,6 +403,8 @@ function onDocumentMouseDown( event ) {
 	if ( intersects.length > 0 ) {
 
 		intersector = getRealIntersector( intersects );
+		if (intersector == null)
+			return;
 
 		if ( isCtrlDown ) {
 			//if ( intersector.object != plane ) {
@@ -340,7 +425,11 @@ function onDocumentMouseDown( event ) {
 			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
 			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
 			index.z = Math.floor( voxelPosition.y / gridCellSize );
-			ss.rpc('demo.clientMove', [1, index, cubecolor], roomNumber);
+			if (index.x == previousIndex.x && index.y == previousIndex.y && index.z == previousIndex.z){
+				ss.rpc('demo.clientMove', [1, index, cubecolor], roomNumber);
+			} else{
+				previousIndex = index;
+			}
 		}
 	}
 }
@@ -384,7 +473,7 @@ function render() {
 
 	}
 
-	raycaster = projector.pickingRay( mouse2D.clone(), camera );
+	/*raycaster = projector.pickingRay( mouse2D.clone(), camera );
 
 	var intersects = raycaster.intersectObjects( scene.children );
 
@@ -398,15 +487,17 @@ function render() {
 
 		}
 
-	}
+	}*/
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 	waterFlow(waterPosition);
+
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
 	
-	movingPlane.position.y = currentWaterHeight;
+	movingPlane.position.copy( new THREE.Vector3(0,currentWaterHeight / 2,0) );
+	movingPlane.scale.z = (currentWaterHeight) / 10;
 	
 	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
 	renderer.render( scene, camera );
@@ -519,9 +610,10 @@ function addBonus( position ) {
 	bonus.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	bonus.matrixAutoUpdate = false;
 	bonus.updateMatrix();
-	setWorldMap(position, BONUS_CELL);
-	//worldMap[position.x][position.y][position.z] = BONUS_CELL;
+	bonus.index = position;
 	scene.add( bonus );
+	unCountedObjectArray.push(bonus);
+	console.log(this, unCountedObjectArray);
 }
 
 
