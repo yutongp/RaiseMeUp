@@ -12,16 +12,18 @@ var fromBot = 1004;// y - 1
 var fromNothing = 1005;
 var WaterOffset;
 var indexOffset;
-var zLength;
+var gridHeight = 300;
 
 
 var roomMap = {}
 
-function Room (roomn) {
+function Room (roomn, itime) {
 	this.players = new Array();
-	this.blocks = 10;
+	this.blocks = 1000;
 	this.roomNumber = roomn;
-	this.botposition = {x:0, y:0, z: 0};
+	this.botPosition = {x:0, y:0, z: 0};
+	this.waterPosition = 0;
+	this.initTime = itime;
 }
 
 
@@ -119,14 +121,14 @@ var getPath2 = function(world,startCube,targetCube){
 			}
 		if(xyzMatch(cube,targetCube)){
 			cloestCube = cube;
-			break;           
+			break;
 		}else{
 
 
 			var nextCube = canGoLeft(cube,world);
 			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
 				world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
-				queue.push(nextCube);               
+				queue.push(nextCube);
 			}
 
 			nextCube = canGoRight(cube,world);
@@ -180,19 +182,16 @@ var getPath2 = function(world,startCube,targetCube){
 
 }
 
-
-
-
 //x - 1
-function canGoLeft(cube,world){
+function canGoLeft(cube, world, indexOffset, WaterOffset) {
 	var nextCube = new Object();
 	nextCube.x = cube.x;
 	nextCube.y = cube.y;
-	nextCube.z = (cube.z+indexOffset)%zLength;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
 	var currentZindex = nextCube.z;
-	var up1Zindex = (nextCube.z + 1)%zLength;
-	var up2Zindex = (nextCube.z + 2)%zLength;
-	var down1Zindex = (nextCube.z - 1)%zLength;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.x -= 1;
 
 	if(cube.x-1<bounds.minX){
@@ -200,18 +199,18 @@ function canGoLeft(cube,world){
 		return nextCube;
 	}
 
-	if((cube.z=-1||world[cube.x-1][cube.y][nextCube.z]>=1)&&world[cube.x-1][cube.y][up1Zindex]==0){
+	if((cube.z == -1||world[cube.x-1][cube.y][nextCube.z]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
 
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]==0){
+	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
-	if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]==0){
+	if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]<=0){
 		nextCube.z = up1Zindex;
 		return nextCube;
 	}
@@ -222,33 +221,42 @@ function canGoLeft(cube,world){
 }
 
 //x+1
-function canGoRight(cube,world){
+function canGoRight(cube, world, indexOffset, WaterOffset) {
 	var nextCube = new Object();
 	nextCube.x = cube.x;
 	nextCube.y = cube.y;
-	nextCube.z = (cube.z+indexOffset)%zLength;
-	var up1Zindex = (nextCube.z + 1)%zLength;
-	var up2Zindex = (nextCube.z + 2)%zLength;
-	var down1Zindex = (nextCube.z - 1)%zLength;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.x += 1;
 
+	console.log('***:');
+	console.log(nextCube);
+	console.log('////:');
+	console.log(cube);
 	if(cube.x+1>bounds.maxX){
 		nextCube.z = -2;
 		return nextCube;
 	}
 
-	if((cube.z=-1||world[cube.x+1][cube.y][nextCube.z]>=1)&&world[cube.x+1][cube.y][up1Zindex]==0){
+	if((cube.z == -1||world[cube.x+1][cube.y][nextCube.z]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
 
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]==0){
+	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
-	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]==0){
+	console.log(world[cube.x+1][cube.y][up1Zindex]);
+	console.log(world[cube.x+1][cube.y][up2Zindex]);
+	console.log(up2Zindex);
+	console.log(indexOffset);
+	console.log(nextCube);
+	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]<=0){
 		nextCube.z = up1Zindex;
 		return nextCube;
 	}
@@ -260,14 +268,15 @@ function canGoRight(cube,world){
 }
 
 //y-1
-function canGoUp(cube,world){
+function canGoUp(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
 	var nextCube = new Object();
 	nextCube.x = cube.x;
 	nextCube.y = cube.y;
-	nextCube.z = (cube.z+indexOffset)%zLength;
-	var up1Zindex = (nextCube.z + 1)%zLength;
-	var up2Zindex = (nextCube.z + 2)%zLength;
-	var down1Zindex = (nextCube.z - 1)%zLength;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.y -= 1;
 
 	if(cube.y-1<bounds.minY){
@@ -275,18 +284,18 @@ function canGoUp(cube,world){
 		return nextCube;
 	}
 
-	if((cube.z=-1||world[cube.x][cube.y-1][nextCube.z]>=1)&&world[cube.x][cube.y-1][up1Zindex]==0){
+	if((cube.z == -1||world[cube.x][cube.y-1][nextCube.z]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
 
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]==0){
+	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
-	if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]==0){
+	if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]<=0){
 		nextCube.z = up1Zindex;
 		return nextCube;
 	}
@@ -299,33 +308,36 @@ function canGoUp(cube,world){
 
 
 //y+1
-function canGoDown(cube,world){
+function canGoDown(cube, world, indexOffset, WaterOffset) {
 	var nextCube = new Object();
 	nextCube.x = cube.x;
 	nextCube.y = cube.y;
-	nextCube.z = (cube.z+indexOffset)%zLength;
-	var up1Zindex = (nextCube.z + 1)%zLength;
-	var up2Zindex = (nextCube.z + 2)%zLength;
-	var down1Zindex = (nextCube.z - 1)%zLength;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.y += 1;
 
-	if(cube.y+1<bounds.maxY){
+	if(cube.y+1 > bounds.maxY){
+		console.log(1);
 		nextCube.z = -2;
 		return nextCube;
 	}
 
-	if((cube.z=-1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]==0){
+	if((cube.z == -1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
 
+		console.log(2);
 		return nextCube;
 	}
 
-	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]==0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]==0){
+	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
 
+		console.log(3);
 		nextCube.z  = down1Zindex;
 		return nextCube;
 	}
 
-	if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]==0){
+	if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]<=0){
 		nextCube.z = up1Zindex;
 		return nextCube;
 	}
@@ -389,20 +401,20 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 }
 
 //input is index in the world index
-var getRewardCubePosition = function (curHigestReward,indexOffset){
+var getRewardCubePositionwithIndex = function (curHigestReward,indexOffset){
 	rewardCubes = new Array();
-    var count = 0;
-    var max;
-    if(curHigestReward.z<indexOffset){
-        max = indexOffset - curHigestReward.z -1;
-    }else{
-        max = zlength - (curHigestReward.z - indexOffset + 1);
-    }
+	var count = 0;
+	var max;
+	if(curHigestReward.z<indexOffset){
+		max = indexOffset - curHigestReward.z -1;
+	}else{
+		max = gridHeight - (curHigestReward.z - indexOffset + 1);
+	}
 
 	var temp = new Object();
 	temp = curHigestReward;
 	for( var i = 0;; i++){
-        
+
 		var newX = Math.floor(Math.random()*(bounds.maxX-bounds.minX))+bounds.minX;
 		var newY = Math.floor(Math.random()*(bounds.maxY-bounds.minY))+bounds.minY;
 		if(newX == temp.x){
@@ -411,15 +423,15 @@ var getRewardCubePosition = function (curHigestReward,indexOffset){
 		if(newY == temp.y){
 			newY+=1;
 		}
-        
+
 		var newZ = temp.z;
 		newZ += Math.floor(Math.random()*heightDeltaRange);
-        count += newZ - temp.z;
-        if(count>max)
-            break;
-        newZ = (newZ + indexOffset)%zLength;
-        
-        
+		count += newZ - temp.z;
+		if(count>max)
+			break;
+		newZ = (newZ + indexOffset)%gridHeight;
+
+
 		temp = new Object();
 		temp.x = newX;
 		temp.y = newY;

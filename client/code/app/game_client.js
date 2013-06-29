@@ -4,7 +4,8 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED = 150 / 7200;
+//var SPEED = 30 / 7200;
+var SPEED = 000000000;
 
 var INITIAL_CAMERA_HEIGHT = 800;
 
@@ -25,7 +26,7 @@ var cubecolor;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
-var gridHeight = 11;
+var gridHeight = 300;
 var worldMap = new Array();
 var waterPosition = 0;
 var oldWaterPostion = 0;
@@ -38,6 +39,7 @@ var player;
 
 var bonusGeo;
 var bonusMaterial;
+var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 
 var initialTime;
 
@@ -199,27 +201,35 @@ function gameboard_init() {
 		var new_position = new Object();
 		new_position.x = playerPosition.x;
 		new_position.y = playerPosition.y;
-		new_position.z = playerPosition.z;
+		new_position.z = playerPosition.z - waterPosition - 1;
+		var next_position = new Object();
+		next_position.z = -2;
 		switch (e.which) {
 			case 115:
 				console.log('down');
-				new_position.y++;
+				next_position = canGoDown(new_position, worldMap, worldIndex, gridHeight, waterPosition);
 				break;
 			case 119:
 				console.log('up');
-				new_position.y--;
+				next_position = canGoUp(new_position, worldMap, worldIndex, gridHeight, waterPosition);
 				break;
 			case 97:
 				console.log('left');
-				new_position.x--;
+				next_position = canGoLeft(new_position, worldMap, worldIndex, gridHeight, waterPosition);
 				break;
 			case 100:
 				console.log('right');
-				new_position.x++;
+				next_position = canGoRight(new_position, worldMap, worldIndex, gridHeight, waterPosition);
 				break;
 			default:
 		}
-		movePlayer(new_position);
+		if (next_position.z != -2) {
+			new_position.x = next_position.x;
+			new_position.y = next_position.y;
+			new_position.z = next_position.z+1;
+			console.log(new_position);
+			movePlayer(new_position);
+		}
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
@@ -422,18 +432,18 @@ function addVoxel(position, materialColor) {
 }
 
 function movePlayer(position) {
-	if (position.x < 0 || position.x >= gridCellNumber)
-		return;
-	if (position.y < 0 || position.y >= gridCellNumber)
-		return;
-	if (position.z < 0) 
-		return;
-	var xMoved = Math.abs(position.x - playerPosition.x);
-	var yMoved = Math.abs(position.y - playerPosition.y);
-	if (xMoved + yMoved > 1)
-		return;
-	if (position.z < playerPosition.z || position.z - playerPosition.z > 1)
-		return;
+	//if (position.x < 0 || position.x >= gridCellNumber)
+		//return;
+	//if (position.y < 0 || position.y >= gridCellNumber)
+		//return;
+	//if (position.z < 0) 
+		//return;
+	//var xMoved = Math.abs(position.x - playerPosition.x);
+	//var yMoved = Math.abs(position.y - playerPosition.y);
+	//if (xMoved + yMoved > 1)
+		//return;
+	//if (position.z - playerPosition.z > 1)
+		//return;
 	///////
 
 	///////
@@ -480,7 +490,7 @@ function addBonus( position ) {
 		return;
 	if (position.y < 0 || position.y >= gridCellNumber)
 		return;
-	if (position.z < 0) 
+	if (position.z < 0)
 		return;
 	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
@@ -493,4 +503,171 @@ function addBonus( position ) {
 	setWorldMap(position, BONUS_CELL);
 	//worldMap[position.x][position.y][position.z] = BONUS_CELL;
 	scene.add( bonus );
+}
+
+
+//x - 1
+function canGoLeft(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var currentZindex = nextCube.z;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.x -= 1;
+
+	if(cube.x-1<bounds.minX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x-1][cube.y][nextCube.z]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x-1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x-1][cube.y][down1Zindex]>=1)&&world[cube.x-1][cube.y][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x-1][cube.y][up1Zindex]>=1&&world[cube.x-1][cube.y][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+	return nextCube;
+}
+
+//x+1
+function canGoRight(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.x += 1;
+
+	console.log('***:');
+	console.log(nextCube);
+	console.log('////:');
+	console.log(cube);
+	if(cube.x+1>bounds.maxX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x+1][cube.y][nextCube.z]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	console.log(world[cube.x+1][cube.y][up1Zindex]);
+	console.log(world[cube.x+1][cube.y][up2Zindex]);
+	console.log(up2Zindex);
+	console.log(indexOffset);
+	console.log(nextCube);
+	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+}
+
+//y-1
+function canGoUp(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.y -= 1;
+
+	if(cube.y-1<bounds.minY){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x][cube.y-1][nextCube.z]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y-1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y-1][down1Zindex]>=1)&&world[cube.x][cube.y-1][up1Zindex]<=0){
+
+		nextCube.z = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y-1][up1Zindex]>=1&&world[cube.x][cube.y-1][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+}
+
+
+//y+1
+function canGoDown(cube, world, indexOffset, WaterOffset) {
+	var nextCube = new Object();
+	nextCube.x = cube.x;
+	nextCube.y = cube.y;
+	nextCube.z = (cube.z+indexOffset)%gridHeight;
+	var up1Zindex = (nextCube.z + 1)%gridHeight;
+	var up2Zindex = (nextCube.z + 2)%gridHeight;
+	var down1Zindex = (nextCube.z - 1)%gridHeight;
+	nextCube.y += 1;
+
+	if(cube.y+1 > bounds.maxY){
+		console.log(1);
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z == -1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
+
+		console.log(2);
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
+
+		console.log(3);
+		nextCube.z  = down1Zindex;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y+1][up1Zindex]>=1&&world[cube.x][cube.y+1][up2Zindex]<=0){
+		nextCube.z = up1Zindex;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
 }
