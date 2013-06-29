@@ -25,7 +25,7 @@ var gridHeight = 11;
 var worldMap = new Array();
 var waterPosition = 0;
 
-var playerPosition;
+var playerPosition = new Object();
 var playerGeo;
 var playerMaterial;
 var player;
@@ -72,14 +72,14 @@ function gameboard_init() {
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
-			worldMap[i][j] = new Array(); 
+			worldMap[i][j] = new Array();
 			for (var k = 0; k<gridHeight; k++)
 				worldMap[i][j][k] = 0;
 		}
 	}
 	playerPosition.x = 0;
-        playerPosition.y = 0;
-        playerPosition.z = 0;
+	playerPosition.y = 0;
+	playerPosition.z = 0;
 	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = -1;
 
 	container = document.createElement( 'div' );
@@ -93,7 +93,7 @@ function gameboard_init() {
 	//info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
 	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of blocks left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
 	container.appendChild(info);
-	
+
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
 
@@ -111,7 +111,7 @@ function gameboard_init() {
 	cubeGeo = new THREE.CubeGeometry( gridCellSize, gridCellSize, gridCellSize );
 	//cubecolorfeed ="0."
 	//for (var i = 0; i < playerName.length; i++) {
-		//cubecolorfeed += playerName.charCodeAt(i).toString();
+	//cubecolorfeed += playerName.charCodeAt(i).toString();
 	//}
 
 	//console.log(parseFloat(cubecolorfeed));
@@ -121,7 +121,7 @@ function gameboard_init() {
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
 
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
-	
+
 
 	playerGeo = new THREE.SphereGeometry(50,50,30);
 	playerMaterial = new THREE.MeshPhongMaterial( { color: 0xfe00b7, ambient: 0xffffff, shading: THREE.FlatShading } );
@@ -129,11 +129,11 @@ function gameboard_init() {
 	player.matrixAutoUpdate = false;
 	movePlayer(playerPosition);
 	scene.add(player);
-	
+
 	bonusGeo = new THREE.TorusGeometry( 25, 10, 20, 20 );
 	bonusMaterial = new THREE.MeshPhongMaterial( { color: 0xffff00, ambient: 0x555555, specular: 0xffffff, metal: true } );
-	
-	
+
+
 	// picking
 
 	projector = new THREE.Projector();
@@ -141,7 +141,7 @@ function gameboard_init() {
 	// grid
 
 	var gridSize = gridCellSize * gridCellNumber;
-	
+
 	plane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
@@ -162,7 +162,7 @@ function gameboard_init() {
 
 	$('#game_board').append("<div id='grid'></div>");
 	$('#grid').append( renderer.domElement );
- 
+
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
@@ -210,7 +210,7 @@ function gameboard_init() {
 
 function signIn() {
 	$('#sign_up').lightbox_me({
-	centered: true,
+		centered: true,
 	onLoad: function() {
 		$('#sign_up').find('input:first').focus()
 	},
@@ -231,7 +231,7 @@ function signIn() {
 
 function signIn() {
 	$('#sign_up').lightbox_me({
-	centered: true,
+		centered: true,
 	onLoad: function() {
 		$('#sign_up').find('input:first').focus()
 	},
@@ -315,7 +315,7 @@ function onDocumentMouseDown( event ) {
 
 		if ( isCtrlDown ) {
 			//if ( intersector.object != plane ) {
-				//scene.remove( intersector.object );
+			//scene.remove( intersector.object );
 			//}
 
 			// delete cube
@@ -326,7 +326,7 @@ function onDocumentMouseDown( event ) {
 
 			tmpVec.copy( intersector.face.normal );
 			tmpVec.applyMatrix3( normalMatrix ).normalize();
-			
+
 			// Convert into matrix index and call addVoxel function to add
 			var index = new Object();
 			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
@@ -417,7 +417,7 @@ function addVoxel(position, materialColor) {
 	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
-	
+
 	scene.add( voxel );
 }
 
@@ -434,7 +434,7 @@ function movePlayer(position) {
 		return;
 	if (position.z < playerPosition.z || position.z - playerPosition.z > 1)
 		return;
-	
+
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
@@ -444,15 +444,13 @@ function movePlayer(position) {
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
-	alert(position.x);
-	alert(position.y);alert(position.z);
 	worldMap[position.x][position.y][position.z] = -1;
 }
 
 function waterFlow() {
 	if (waterPosition+1 == gridHeight)
 		waterPosition = 0;
-	else waterPosition ++;	
+	else waterPosition ++;
 }
 
 function addBonus( position ) {
@@ -470,6 +468,6 @@ function addBonus( position ) {
 	bonus.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	bonus.matrixAutoUpdate = false;
 	bonus.updateMatrix();
-	
+
 	scene.add( bonus );
 }
