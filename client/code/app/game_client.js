@@ -41,6 +41,16 @@ var highestLevel;
 var initialTime;
 
 $(document).ready(function() {
+
+	var hammertime = $(document).hammer();
+
+	// the whole area
+	hammertime.on("drag", function(ev) {
+		ev.preventDefault();
+				    alert('you swiped!');
+				});
+
+
 	signIn();
 });
 
