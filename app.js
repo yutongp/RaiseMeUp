@@ -21,7 +21,7 @@ ss.http.route('/', function(req, res){
 ss.client.define('game', {
   view: 'game.html',
   css:  ['libs/reset.css', 'app.styl'],
-  code: ['libs/jquery.min.js','libs/jquery.lightbox_me.js', 'app'],
+  code: ['libs/jquery.min.js','libs/jquery.lightbox_me.js', 'app', 'libs/jquery.hammer.min.js','app'],
   tmpl: '*'
 });
 
@@ -41,7 +41,7 @@ if (ss.env === 'production') ss.client.packAssets();
 
 // Start web server
 var server = http.Server(ss.http.middleware);
-server.listen(80);
+server.listen(8000);
 
 // Start SocketStream
 ss.start(server);
