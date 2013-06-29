@@ -12,7 +12,7 @@ var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMat
 var cubeGeo, cubeMaterial;
 var i, intersector;
 var playerName, roomNumber, blocksLeft;
-var cubecolor
+var cubecolor;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
@@ -21,6 +21,9 @@ var playerPosition = new Object();
 var playerGeo;
 var playerMaterial;
 var player;
+
+var bonusGeo;
+var bonusMaterial;
 
 $(document).ready(function() {
 	signIn();
@@ -105,11 +108,16 @@ function gameboard_init() {
 	
 
 	playerGeo = new THREE.SphereGeometry(50,50,30);
-	playerMaterial = new THREE.MeshPhongMaterial( { color: 0xfeb700, ambient: 0xffffff, shading: THREE.FlatShading } );
+	playerMaterial = new THREE.MeshPhongMaterial( { color: 0xfe00b7, ambient: 0xffffff, shading: THREE.FlatShading } );
 	player = new THREE.Mesh(playerGeo, playerMaterial);
 	player.matrixAutoUpdate = false;
 	movePlayer(playerPosition);
 	scene.add(player);
+	
+	bonusGeo = new THREE.TorusGeometry( 25, 10, 20, 20 );
+	bonusMaterial = new THREE.MeshPhongMaterial( { color: 0xffff00, ambient: 0x555555, specular: 0xffffff, metal: true } );
+	
+	
 	// picking
 
 	projector = new THREE.Projector();
@@ -176,7 +184,11 @@ function gameboard_init() {
 		movePlayer(new_position);
 	});
 	window.addEventListener( 'resize', onWindowResize, false );
-
+	var bonusPosition = new Object();
+	bonusPosition.x = gridCellNumber / 2;
+	bonusPosition.y = gridCellNumber / 2;
+	bonusPosition.z = 0;
+	addBonus(bonusPosition);
 }
 
 function signIn() {
@@ -394,4 +406,23 @@ function movePlayer(position) {
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
+}
+
+function addBonus( position ) {
+	if (position.x < 0 || position.x >= gridCellNumber)
+		return;
+	if (position.y < 0 || position.y >= gridCellNumber)
+		return;
+	if (position.z < 0) 
+		return;
+	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );
+	var gridSize = gridCellSize * gridCellNumber;
+	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
+	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
+	bonus.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
+	bonus.matrixAutoUpdate = false;
+	bonus.updateMatrix();
+	
+	scene.add( bonus );
 }
