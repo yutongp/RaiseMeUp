@@ -85,14 +85,20 @@ exports.actions = function(req, res, ss) {
 		},
 
 		connectGame: function(playerName, roomNumber) {
-			roomMap[roomNumber] = new Room(roomNumber);
+			if (roomMap[roomNumber] == undefined) {
+				roomMap[roomNumber] = new Room(roomNumber);
+			}
+			thisRoom = roomMap[roomNumber];
+			thisRoom.players.push(playerName);
 			req.session.channel.subscribe(roomNumber);
-			return res(true);
+			ss.publish.channel(roomNumber, 'addPlayer', playerName);
+			return res(thisRoom.blocks);
 		},
 
 		requireReward: function(numReward, lastReward, channel) {
 			ss.publish.channel(channel, 'addRewardlist', getReward(numReward, lastReward));
 		},
+
 	};
 
 };
