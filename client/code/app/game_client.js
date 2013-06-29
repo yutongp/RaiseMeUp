@@ -64,8 +64,8 @@ $(document).ready(function() {
 				    //alert(ev.gesture.deltaX + ":" + ev.currentTarget.documentElement.clientWidth);
 				});*/
 
-
-	signIn();
+	showInstruction();
+	//signIn();
 });
 
 
@@ -286,6 +286,20 @@ function gameboard_init() {
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
+}
+
+function showInstruction() {
+	$('#instruction').lightbox_me({
+        centered: true,
+        closeClick: false,
+        onLoad: function() {
+                $('#sign_up').find('input:first').focus()
+        },
+        onClose: function() {
+                signIn();
+        },
+        closeSelector: ".startGame"
+        });
 }
 
 function signIn() {
