@@ -89,7 +89,7 @@ function gameInit() {
 				addVoxel( data[1], parseInt(data[2]) );
 				setWorldMap(data[1], VOXEL_CELL);
 				blocksLeft = blocksLeft - 1;
-				if (window.innerWidth < 500) {
+				if (window.innerWidth < 600) {
 					document.getElementById('blockNum-d').innerHTML = blocksLeft.toString()+'<br><br>';
 				} else {
 					document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
@@ -117,7 +117,7 @@ function gameInit() {
 
 	ss.event.on('addblocksLeftNum', function(data, channelNumber) {
 		blocksLeft = data;
-		if (window.innerWidth < 500) {
+		if (window.innerWidth < 600) {
 			document.getElementById('blockNum-d').innerHTML = blocksLeft.toString()+'<br><br>';
 		} else {
 			document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
@@ -156,7 +156,7 @@ function requireReward(numReward, lastReward) {
 function countScore(){
 	if (Date.now() - initialTime > 2000) {
 		score = score + 77;
-		if (window.innerWidth < 500)
+		if (window.innerWidth < 600)
 			document.getElementById('scoreboard-d').innerHTML = score.toString();	
 		else document.getElementById('scoreboard').innerHTML = score.toString();
 	}
@@ -239,7 +239,7 @@ function gameboard_init() {
 	document.body.appendChild( container );
 
 	var info = document.createElement('div');
-	if (window.innerWidth < 500) { //Detect devices
+	if (window.innerWidth < 600) { //Detect devices
 		info.id = 'info-d';
 		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+blocksLeft+'</a></div><br>';
                 container.appendChild(info);
