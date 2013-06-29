@@ -67,6 +67,8 @@ var mouseDown = false;
 $(document).ready(function() {
 	//ev.preventDefault();
 	signIn();
+	showInstruction();
+	//signIn();
 });
 
 
@@ -358,6 +360,19 @@ function gameboard_init() {
 function movePlayerWrapper(new_position) {
 	new_position.z = (new_position.z) % gridHeight + worldIndex;
 	ss.rpc("demo.botMove", new_position, roomNumber);
+}
+function showInstruction() {
+	$('#instruction').lightbox_me({
+        centered: true,
+        closeClick: false,
+        onLoad: function() {
+                $('#sign_up').find('input:first').focus()
+        },
+        onClose: function() {
+                signIn();
+        },
+        closeSelector: ".startGame"
+        });
 }
 
 function signIn() {

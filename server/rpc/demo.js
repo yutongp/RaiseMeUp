@@ -2,7 +2,7 @@
 var rewardCubeHeightRange = 9;
 var rewardCubeDistanceRange = 9;
 var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
-var heightDeltaRange = 1;
+var heightDeltaRange = 6;
 var MaxReward = 5;
 var visited  = 1000
 var fromLeft = 1001; // x + 1
@@ -25,7 +25,7 @@ var roomMap = {}
 function Room (roomn, itime) {
 	this.players = new Array();
 	this.playercolors = new Array();
-	this.blocks = 100;
+	this.blocks = 50;
 	this.roomNumber = roomn;
 	this.botPosition = {x:0, y:0, z: 0};
 	this.waterPosition = 0;
