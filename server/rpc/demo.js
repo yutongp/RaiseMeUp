@@ -2,7 +2,7 @@
 var rewardCubeHeightRange = 9;
 var rewardCubeDistanceRange = 9;
 var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
-var heightDeltaRange = 6;
+var heightDeltaRange = 1;
 var MaxReward = 5;
 var visited  = 1000
 var fromLeft = 1001; // x + 1
@@ -14,16 +14,31 @@ var WaterOffset;
 var indexOffset;
 var gridHeight = 3000;
 
+var gridCellNumber = 10;
+var EMPTY_CELL = 0;
+var VOXEL_CELL = 1;
+var PLAYER_CELL = -1;
+var BONUS_CELL = -2;
 
 var roomMap = {}
 
 function Room (roomn, itime) {
 	this.players = new Array();
-	this.blocks = 1000;
+	this.blocks = 100;
 	this.roomNumber = roomn;
 	this.botPosition = {x:0, y:0, z: 0};
 	this.waterPosition = 0;
 	this.initTime = itime;
+	this.waterIndex = 0;
+	this.worldMap = new Array();
+	for (var i = 0; i<gridCellNumber; i++) {
+		this.worldMap[i] = new Array();
+		for (var j = 0; j<gridCellNumber; j++){
+			this.worldMap[i][j] = new Array();
+			for (var k = 0; k<gridHeight; k++)
+				this.worldMap[i][j][k] = EMPTY_CELL;
+		}
+	}
 }
 
 
@@ -466,6 +481,7 @@ exports.actions = function(req, res, ss) {
 			clientMove: function(data, channel) {
 				ss.publish.channel(channel, 'addBox', data);
 				roomMap[channel].blocks--;
+				roomMap[channel].worldMap[data[1].x][data[1].y][data[1].z]=VOXEL_CELL;
 				return res(true);
 			},
 
@@ -483,6 +499,11 @@ exports.actions = function(req, res, ss) {
 
 			requireReward: function(numReward, lastReward, channel) {
 				ss.publish.channel(channel, 'addRewardlist', getRewardCubePosition(numReward, lastReward));
+			},
+
+			getRewardNum: function(currentReward, nextReward, channel) {
+				roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, currentReward,nextReward,2)) + 1;
+				ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
 			},
 
 	};

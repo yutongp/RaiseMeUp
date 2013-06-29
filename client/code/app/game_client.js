@@ -46,6 +46,8 @@ var startTime = 0;
 var countdownSecond = 10;
 var clock;
 
+var rewardHash = new Array();
+
 var unCountedObjectArray;
 var previousIndex;
 
@@ -76,10 +78,25 @@ function gameInit() {
 	});
 
 	ss.event.on('addRewardlist', function(data, channelNumber) {
+		var rewardin = false;
 		for (var i = 0; i < data.length;i++) {
-			addBonus(data[i]);
-			console.log(data[i]);
+			rewardin = false;
+			for (var j =0; j< rewardHash.length; j++) {
+				if (rewardHash[j] == undefined) {
+					rewardHash[j] = addBonus(data[i]);
+					rewardin = true;
+					break;
+				}
+			}
+			if (rewardin == false) {
+				rewardHash.push(addBonus(data[i]));
+			}
 		}
+	});
+
+	ss.event.on('addblocksLeftNum', function(data, channelNumber) {
+		blocksLeft = data;
+		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
 	});
 }
 
@@ -563,8 +580,8 @@ function movePlayer(position) {
 
 	///////
 
-	position.z = WorldztoAbsoz(position.z);
 	checkReward(position);
+	position.z = WorldztoAbsoz(position.z);
 	//webGL update bot object
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
@@ -580,6 +597,7 @@ function movePlayer(position) {
 	playerPosition.z = position.z;
 	setWorldMap(playerPosition, PLAYER_CELL);
 }
+
 
 function waterFlow(waterPos) {
 	//wrap world map
@@ -598,10 +616,25 @@ function setWorldMap(position, type) {
 }
 
 function checkReward(position) {
+	console.log("ss,");
 	if (getCellType(position) == BONUS_CELL) {
-		console.log("dadwada!!!!!!!");
-		blocksLeft += 9999;
-		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+		var i = 0
+		for (i = 0; i < rewardHash.length; i++) {
+				console.log("sadasdadsadas,");
+				if (rewardHash[i] != undefined) {
+					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == WorldztoAbsoz(position.z)) {
+						console.log("sadasdad", i);
+						if(rewardHash[i+1] == undefined) {
+							ss.rpc('demo.getRewardNum', rewardHash[i].index, playerPosition, roomNumber);
+						} else {
+						ss.rpc('demo.getRewardNum', rewardHash[i].index, rewardHash[i+1].index, roomNumber);
+						}
+						scene.remove(rewardHash[i]);
+						rewardHash[i] = undefined;
+						requireReward(1, playerPosition);
+					}
+				}
+		}
 	}
 }
 
@@ -619,12 +652,14 @@ function getCellType(position) {
 }
 
 function addBonus( position ) {
-	if (position.x < 0 || position.x >= gridCellNumber)
-		return;
-	if (position.y < 0 || position.y >= gridCellNumber)
-		return;
-	if (position.z < 0)
-		return;
+	//if (position.x < 0 || position.x >= gridCellNumber)
+		//return;
+	//if (position.y < 0 || position.y >= gridCellNumber)
+		//return;
+	//if (position.z < 0)
+		//return;
+
+	setWorldMap(position, BONUS_CELL);
 	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
