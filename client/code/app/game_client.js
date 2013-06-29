@@ -1,5 +1,10 @@
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+var EMPTY_CELL = 0;
+var VOXEL_CELL = 1;
+var PLAYER_CELL = 100;
+var BONUS_CELL = 666;
+
 var container, stats;
 var camera, scene, renderer;
 var projector, plane, cube;
@@ -11,52 +16,84 @@ var rollOverMesh, rollOverMaterial;
 var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
 var cubeGeo, cubeMaterial;
 var i, intersector;
+var playerName, roomNumber, blocksLeft;
+var cubecolor;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
 
-var playerPosition = new Object();
+var playerPosition;
 var playerGeo;
 var playerMaterial;
 var player;
 
+var world;
+
 $(document).ready(function() {
-	init();
+	signIn();
+});
+
+
+function gameInit() {
+	setSocket();
+	gameboard_init();
 	animate();
 
-	ss.event.on('addBox', function(data) {
+	ss.event.on('addBox', function(data, channelNumber) {
 		if (data[0] == 0) {
 			//from function onDocumentMouseDown
 			if ( data[1] != plane ) {
-
 				scene.remove( data[1] );
-
 			}
 		}
-
 		if (data[0] == 1) {
-			var position = data[1];
-			addVoxel( position );
+			addVoxel( data[1], parseInt(data[2]) );
 		}
 	});
 
-});
+	ss.event.on('addRewardlist', function(data, channelNumber) {
 
-function init() {
+	});
+}
+
+
+function setSocket() {
+	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
+		blocksLeft = initData;
+		console.log(blocksLeft);
+	});
+
+}
+
+
+function gameboard_init() {
+	world = new Array();
+	var groundLayer = new Array();
+	for (var i = 0; i < gridCellNumber; i++) {
+		var row = new Array();
+		for (var j = 0; j < gridCellNumber; j++) {
+			row[j] = EMPTY_CELL;
+		}
+		groundLayer[i] = row;
+	}
+	world[0] = groundLayer;
+	playerPosition = new Object();
 	playerPosition.x = 0;
 	playerPosition.y = 0;
 	playerPosition.z = 0;
 
 	container = document.createElement( 'div' );
+	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
 
-	var info = document.createElement( 'div' );
-	info.style.position = 'absolute';
-	info.style.top = '10px';
-	info.style.width = '100%';
-	info.style.textAlign = 'center';
-	info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> - voxel painter - webgl<br><strong>click</strong>: add voxel, <strong>control + click</strong>: remove voxel, <strong>shift + click</strong>: rotate';
-	container.appendChild( info );
+
+	var info = document.createElement('div');
+	var height = window.innerHeight - 90;
+	info.id = 'info';
+	info.style.top = height.toString()+'px';
+	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left:</a></div>';
+	container.appendChild(info);
+
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
@@ -73,7 +110,15 @@ function init() {
 	// cubes
 
 	cubeGeo = new THREE.CubeGeometry( gridCellSize, gridCellSize, gridCellSize );
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading } );
+	//cubecolorfeed ="0."
+	//for (var i = 0; i < playerName.length; i++) {
+		//cubecolorfeed += playerName.charCodeAt(i).toString();
+	//}
+
+	//console.log(parseFloat(cubecolorfeed));
+	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0x00ff80, shading: THREE.FlatShading } );
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	cubeMaterial.ambient = cubeMaterial.color;
 
@@ -109,22 +154,42 @@ function init() {
 	renderer = new THREE.WebGLRenderer( { antialias: true, preserveDrawingBuffer: true } );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
-	container.appendChild( renderer.domElement );
+	$('#game_board').append("<div id='grid'></div>");
+	$('#grid').append( renderer.domElement );
  
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
-	container.appendChild( stats.domElement );
+	$('#grid').append( stats.domElement );
+	$('#grid').bind('mousedown', onDocumentMouseDown);
+	$('#grid').bind('mousemove', onDocumentMouseMove);
 
-	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	document.addEventListener( 'keydown', onDocumentKeyDown, false );
 	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
-	//
-
 	window.addEventListener( 'resize', onWindowResize, false );
 
+}
+
+function signIn() {
+	$('#sign_up').lightbox_me({
+	centered: true,
+	onLoad: function() {
+		$('#sign_up').find('input:first').focus()
+	},
+	onClose: function() {
+		playerName = $('input[name="player_name"]').val();
+		roomNumber = $('input[name="room_number"]').val();
+		if (playerName == '' || roomNumber == '') {
+			$('#emptyInput').attr('style','visibility: visible;');
+			signIn();
+		}
+		else {
+			gameInit();
+		}
+	},
+	closeSelector: ".confirm"
+	});
 }
 
 function onWindowResize() {
@@ -135,6 +200,7 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
+
 
 function getRealIntersector( intersects ) {
 
@@ -195,7 +261,7 @@ function onDocumentMouseDown( event ) {
 			//}
 
 			// delete cube
-			ss.rpc('demo.clientMove', [0, intersector.object])
+			ss.rpc('demo.clientMove', [0, intersector.object], roomNumber);
 		} else {
 			// create cube
 			normalMatrix.getNormalMatrix( intersector.object.matrixWorld );
@@ -204,11 +270,11 @@ function onDocumentMouseDown( event ) {
 			tmpVec.applyMatrix3( normalMatrix ).normalize();
 			
 			// Convert into matrix index and call addVoxel function to add
-			var position = new Object();
-			position.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
-			position.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
-			position.z = Math.floor( voxelPosition.y / gridCellSize );
-			ss.rpc('demo.clientMove', [1, position])
+			var index = new Object();
+			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
+			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
+			index.z = Math.floor( voxelPosition.y / gridCellSize );
+			ss.rpc('demo.clientMove', [1, index, cubecolor], roomNumber);
 		}
 	}
 }
