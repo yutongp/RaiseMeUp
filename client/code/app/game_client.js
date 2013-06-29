@@ -45,7 +45,7 @@ var previousIndex;
 
 $(document).ready(function() {
 
-	var hammertime = $(document).hammer();
+	//var hammertime = $(document).hammer();
 
 /*	// the whole area
 	hammertime.on("drag", function(ev) {
@@ -141,6 +141,7 @@ function gameboard_init() {
 	rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
 	rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
 	scene.add( rollOverMesh );
+	console.log(this, rollOverMesh);
 
 	// cubes
 
@@ -182,7 +183,8 @@ function gameboard_init() {
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
 	
-	movingPlane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.5, transparent: true } ) );
+	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true } ) );
+	movingPlane.y = -100;
 	movingPlane.rotation.x = - Math.PI / 2;
 	scene.add( movingPlane );
 	//unCountedObjectArray.push(movingPlane);
@@ -321,14 +323,14 @@ function setVoxelPosition( intersector ) {
 	centerPosition.x = Math.floor( tmpPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
 	centerPosition.y = Math.floor( tmpPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
 	centerPosition.z = Math.floor( tmpPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
-	
+/*	
 	if (Math.abs(centerPosition.x - tmpPosition.x) > (7 / 16) * gridCellSize)
 		return;
 	if (Math.abs(centerPosition.y - tmpPosition.y) > (4 / 8) * gridCellSize)
 		return;
 	if (Math.abs(centerPosition.z - tmpPosition.z) > (7 / 16) * gridCellSize)
 		return;
-	
+	*/
 	var index = new Object();
 	index.x = Math.floor( tmpPosition.x / gridCellSize ) + gridCellNumber / 2;
 	index.y = Math.floor( tmpPosition.z / gridCellSize ) + gridCellNumber / 2;
@@ -481,7 +483,8 @@ function render() {
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
 	
-	movingPlane.position.y = currentWaterHeight;
+	movingPlane.position.copy( new THREE.Vector3(0,currentWaterHeight / 2,0) );
+	movingPlane.scale.z = (currentWaterHeight) / 10;
 	
 	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
 	renderer.render( scene, camera );
