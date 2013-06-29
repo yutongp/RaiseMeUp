@@ -1,5 +1,10 @@
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+var EMPTY_CELL = 0;
+var VOXEL_CELL = 1;
+var PLAYER_CELL = 100;
+var BONUS_CELL = 666;
+
 var container, stats;
 var camera, scene, renderer;
 var projector, plane, cube;
@@ -17,7 +22,7 @@ var cubecolor;
 var gridCellSize = 100;
 var gridCellNumber = 10;
 
-var playerPosition = new Object();
+var playerPosition;
 var playerGeo;
 var playerMaterial;
 var player;
@@ -28,7 +33,6 @@ var bonusMaterial;
 $(document).ready(function() {
 	signIn();
 });
-
 
 function gameInit() {
 	setSocket();
@@ -52,7 +56,6 @@ function gameInit() {
 	});
 }
 
-
 function setSocket() {
 	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
 		blocksLeft = initData;
@@ -70,7 +73,6 @@ function gameboard_init() {
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
-
 
 	var info = document.createElement('div');
 	var height = window.innerHeight - 90;
@@ -104,6 +106,7 @@ function gameboard_init() {
 	document.getElementById('team').innerHTML = $('#team').html()+' <a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
 
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
+
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 	
 
@@ -183,12 +186,34 @@ function gameboard_init() {
 		}
 		movePlayer(new_position);
 	});
+
 	window.addEventListener( 'resize', onWindowResize, false );
 	var bonusPosition = new Object();
 	bonusPosition.x = gridCellNumber / 2;
 	bonusPosition.y = gridCellNumber / 2;
 	bonusPosition.z = 0;
 	addBonus(bonusPosition);
+}
+
+function signIn() {
+	$('#sign_up').lightbox_me({
+	centered: true,
+	onLoad: function() {
+		$('#sign_up').find('input:first').focus()
+	},
+	onClose: function() {
+		playerName = $('input[name="player_name"]').val();
+		roomNumber = $('input[name="room_number"]').val();
+		if (playerName == '' || roomNumber == '') {
+			$('#emptyInput').attr('style','visibility: visible;');
+			signIn();
+		}
+		else {
+			gameInit();
+		}
+	},
+	closeSelector: ".confirm"
+	});
 }
 
 function signIn() {
