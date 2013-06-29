@@ -12,46 +12,27 @@ var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMat
 var cubeGeo, cubeMaterial;
 var i, intersector;
 var playerName, roomNumber;
+var cubecolor
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
 
 $(document).ready(function() {
 	signIn();
+	setSocket();
 	
-	ss.event.on('addBox', function(data) {
-		if (data[0] == 0) {
-			//from function onDocumentMouseDown
-			if ( data[1] != plane ) {
-
-				scene.remove( data[1] );
-
-			}
-		}
-
-		if (data[0] == 1) {
-			//from function setVoxelPosition
-			normalMatrix.getNormalMatrix( data[1] );
-
-			tmpVec.copy( data[2] );
-			tmpVec.applyMatrix3( normalMatrix ).normalize();
-
-			voxelPosition.addVectors( data[3], tmpVec );
-
-			voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
-			voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
-			voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
-
-			//from function onDocumentMouseDown
-			var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
-			voxel.position.copy( voxelPosition );
-			voxel.matrixAutoUpdate = false;
-			voxel.updateMatrix();
-			scene.add( voxel );
-		}
-	});
 
 });
+
+function setSocket() {
+	ss.rpc('demo.connectGame', playerName, roomNumber, function(err) {
+		if(err) {
+			console.log("connect FAILED");
+		} else {
+		}
+	});
+}
+
 
 function init() {
 
@@ -144,8 +125,41 @@ function signIn() {
 		onClose: function() {
 			playerName = $('input[name="player_name"]').val();
 			roomNumber = $('input[name="room_number"]').val();
+			setSocket();
 			init();
-			animate();},
+			animate();
+			ss.event.on('addBox', function(data, channelNumber) {
+				if (data[0] == 0) {
+					//from function onDocumentMouseDown
+					if ( data[1] != plane ) {
+
+						scene.remove( data[1] );
+
+					}
+				}
+
+				if (data[0] == 1) {
+					//from function setVoxelPosition
+					normalMatrix.getNormalMatrix( data[1] );
+
+					tmpVec.copy( data[2] );
+					tmpVec.applyMatrix3( normalMatrix ).normalize();
+
+					voxelPosition.addVectors( data[3], tmpVec );
+
+					voxelPosition.x = Math.floor( voxelPosition.x / gridCellSize ) * gridCellSize + gridCellSize/2;
+					voxelPosition.y = Math.floor( voxelPosition.y / gridCellSize ) * gridCellSize + gridCellSize/2;
+					voxelPosition.z = Math.floor( voxelPosition.z / gridCellSize ) * gridCellSize + gridCellSize/2;
+
+					//from function onDocumentMouseDown
+					var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+					voxel.position.copy( voxelPosition );
+					voxel.matrixAutoUpdate = false;
+					voxel.updateMatrix();
+					scene.add( voxel );
+				}
+			});
+		},
 		closeSelector: ".confirm"
         });
 }
@@ -219,7 +233,7 @@ function onDocumentMouseDown( event ) {
 			//}
 
 			// delete cube
-			ss.rpc('demo.clientMove', [0, intersector.object])
+			ss.rpc('demo.clientMove', [0, intersector.object], roomNumber);
 		} else {
 			//intersector = getRealIntersector( intersects );
 			//setVoxelPosition( intersector );
@@ -231,7 +245,7 @@ function onDocumentMouseDown( event ) {
 
 			// create cube
 			ss.rpc('demo.clientMove', [1, intersector.object.matrixWorld
-					, intersector.face.normal, intersector.point])
+					, intersector.face.normal, intersector.point], roomNumber);
 		}
 	}
 }

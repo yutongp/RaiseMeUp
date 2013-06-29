@@ -1,6 +1,15 @@
 // Server-side Code
 
 // Define actions which can be called from the client using ss.rpc('demo.ACTIONNAME', param1, param2...)
+
+var roomMap = {}
+
+function Room (roomn) {
+	this.players = new Array();
+	this.blocks = 0;
+	this.roomNumber = roomn;
+}
+
 exports.actions = function(req, res, ss) {
 
 	// Example of pre-loading sessions into req.session using internal middleware
@@ -20,9 +29,15 @@ exports.actions = function(req, res, ss) {
 			}
 		},
 
-		clientMove: function(data) {
-			ss.publish.all('addBox', data)
-			return res(true)
+		clientMove: function(data, channel) {
+			ss.publish.channel(channel, 'addBox', data);
+			return res(true);
+		},
+
+		connectGame: function(playerName, roomNumber) {
+			roomMap[roomNumber] = new Room(roomNumber);
+			req.session.channel.subscribe(roomNumber);
+			return res(true);
 		}
 	};
 
