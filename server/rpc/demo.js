@@ -4,6 +4,11 @@ var rewardCubeDistanceRange = 9;
 var bounds = {maxX: 10, maxY: 10};
 var heightDeltaRange = 6;
 var MaxReward = 5;
+var visited  = 1000
+var fromLeft = 1001; // x + 1
+var fromRight = 1002;// x - 1
+var fromUp = 1003;// y + 1;
+var fromBot = 1004;// y - 1
 
 var roomMap = {}
 
@@ -13,6 +18,222 @@ function Room (roomn) {
 	this.roomNumber = roomn;
 }
 
+
+
+
+var getPath = function(world,startCube,targetCube){
+    //0 >; 1 ^ ; 2 < ; v
+    path = [];
+    queue = [];
+    queue.push(startCube);
+    startCube.visited = true;
+    var visited = world;
+    
+    
+    
+    while(queue.length!=0){
+        var cube = queue.shift();
+        if(xyzMatch(cube,targetCube)){
+            var currentCube = cube;
+            while(xyzMatch(currentCube,startCube)){
+                var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
+                path.push(fromDirection);
+                if(fromDirection == fromRight){
+                    currentCube = canGoRight(currentCube,world);
+                }
+                
+                if(fromDirection == fromLeft){
+                    currentCube = canGoLeft(currentCube,world);
+                }
+                
+                if(fromDirection == fromBot){
+                    currentCube = canGoDown(currentCube,world);
+                }
+                
+                if(fromDirection == fromUp){
+                    currentCube = canGoUp(currentCube,world);
+                }
+                return path;
+            }        
+            
+        }else{
+            
+            
+            var nextCube = canGoLeft(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
+                queue.push(nextCube);
+            }
+            
+            nextCube = canGoRight(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
+                queue.push(nextCube);
+            }
+            
+            nextCube = canGoUp(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
+                queue.push(nextCube);
+            }
+            
+            nextCube = canGoDown(cube,world);
+            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+                world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
+                queue.push(nextCube);
+            }
+            
+        
+        }
+    
+    }
+
+
+
+}
+
+//x - 1
+function canGoLeft(cube,world){
+    
+    var nextCube = cube;
+    nextCube = cube;
+    nextCube.x -= 1;
+    
+    if(cube.x-1<bounds.minX){
+        nextCube.z = -2;
+        return nextCube;
+    }
+    
+    if((cube.z=-1||world[cube.x-1][cube.y][cube.z]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+        
+        return nextCube;
+    }
+    
+    if(cube.z>-1&&world[cube.x-1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x-1][cube.y][cube.z-1]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+        
+        nextCube.z -= 1;
+        return nextCube;
+    }
+    
+    if(world[cube.x-1][cube.y][cube.z+1]>=1&&world[cube.x-1][cube.y][cube.z+2]==0){
+        nextCube.z += 1;
+        return nextCube;
+    }
+    
+    
+    nextCube.z = -2;
+    
+    return nextCube;
+
+}
+
+function canGoRight(cube,world){
+    
+    var nextCube = cube;
+    nextCube = cube;
+    nextCube.x += 1;
+    
+    if(cube.x+1>bounds.maxX){
+        nextCube.z = -2;
+        return nextCube;
+    }
+    
+    if((cube.z=-1||world[cube.x+1][cube.y][cube.z]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+        
+        return nextCube;
+    }
+    
+    if(cube.z>-1&&world[cube.x+1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x+1][cube.y][cube.z-1]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+        
+        nextCube.z -= 1;
+        return nextCube;
+    }
+    
+    if(world[cube.x+1][cube.y][cube.z+1]>=1&&world[cube.x+1][cube.y][cube.z+2]==0){
+        nextCube.z += 1;
+        return nextCube;
+    }
+    
+    
+    nextCube.z = -2;
+    
+    return nextCube;
+    
+}
+
+function canGoUp(cube,world){
+    
+    var nextCube = cube;
+    nextCube = cube;
+    nextCube.y -= 1;
+    
+    if(cube.y-1<bounds.minY){
+        nextCube.z = -2;
+        return nextCube;
+    }
+    
+    if((cube.z=-1||world[cube.x][cube.y-1][cube.z]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+        
+        return nextCube;
+    }
+    
+    if(cube.z>-1&&world[cube.x][cube.y-1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y-1][cube.z-1]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+        
+        nextCube.z -= 1;
+        return nextCube;
+    }
+    
+    if(world[cube.x][cube.y-1][cube.z+1]>=1&&world[cube.x][cube.y-1][cube.z+2]==0){
+        nextCube.z += 1;
+        return nextCube;
+    }
+    
+    
+    nextCube.z = -2;
+    
+    return nextCube;
+    
+}
+
+function canGoDown(cube,world){
+    
+    var nextCube = cube;
+    nextCube = cube;
+    nextCube.y += 1;
+    
+    if(cube.y+1<bounds.maxY){
+        nextCube.z = -2;
+        return nextCube;
+    }
+    
+    if((cube.z=-1||world[cube.x][cube.y+1][cube.z]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+        
+        return nextCube;
+    }
+    
+    if(cube.z>-1&&world[cube.x][cube.y+1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y+1][cube.z-1]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+        
+        nextCube.z -= 1;
+        return nextCube;
+    }
+    
+    if(world[cube.x][cube.y+1][cube.z+1]>=1&&world[cube.x][cube.y+1][cube.z+2]==0){
+        nextCube.z += 1;
+        return nextCube;
+    }
+    
+    
+    nextCube.z = -2;
+    
+    return nextCube;
+    
+}
+
+
+
+function xyzMatch(cube1,cube2){
+    return (cube1.x==cube2.x)&&(cube1.y==cube2.y)&&(cube1.z==cube2.z);
+}
 
 var getReward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
 
