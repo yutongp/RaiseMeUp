@@ -4,10 +4,14 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = 100;
 var BONUS_CELL = 666;
+var SPEED = 150 / 7200;
+
+var INITIAL_CAMERA_HEIGHT = 800;
 
 var container, stats;
 var camera, scene, renderer;
 var projector, plane, cube;
+var movingPlane;
 var mouse2D, mouse3D, raycaster,
 	rollOveredFace, isShiftDown = false,
 	theta = 45 * 0.5, isCtrlDown = false;
@@ -33,6 +37,9 @@ var player;
 var bonusGeo;
 var bonusMaterial;
 
+var highestLevel;
+var initialTime;
+
 $(document).ready(function() {
 	signIn();
 });
@@ -49,7 +56,7 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			addVoxel( data[1], parseInt(data[2]) );
-			worldMap[data[1].x][data[1].y][data[1].z] = 1;
+			worldMap[data[1].x][data[1].y][data[1].z] = VOXEL_CELL;
 			blocksLeft = blocksLeft - 1;
 			document.getElementById('blockNum').innerHTML = blocksLeft.toString();		
 		}
@@ -69,18 +76,20 @@ function setSocket() {
 }
 
 function gameboard_init() {
+	initialTime = Date.now();
+	highestLevel = 0;
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
 			worldMap[i][j] = new Array();
 			for (var k = 0; k<gridHeight; k++)
-				worldMap[i][j][k] = 0;
+				worldMap[i][j][k] = EMPTY_CELL;
 		}
 	}
 	playerPosition.x = 0;
 	playerPosition.y = 0;
 	playerPosition.z = 0;
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = -1;
+	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = PLAYER_CELL;
 
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
@@ -95,7 +104,7 @@ function gameboard_init() {
 	container.appendChild(info);
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-	camera.position.y = 800;
+	camera.position.y = INITIAL_CAMERA_HEIGHT;
 
 	scene = new THREE.Scene();
 
@@ -145,6 +154,10 @@ function gameboard_init() {
 	plane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
+	
+	movingPlane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
+	movingPlane.rotation.x = - Math.PI / 2;
+	scene.add( movingPlane );
 
 	mouse2D = new THREE.Vector3( 0, 10000, 0.5 );
 
@@ -229,27 +242,6 @@ function signIn() {
 	});
 }
 
-function signIn() {
-	$('#sign_up').lightbox_me({
-		centered: true,
-	onLoad: function() {
-		$('#sign_up').find('input:first').focus()
-	},
-	onClose: function() {
-		playerName = $('input[name="player_name"]').val();
-		roomNumber = $('input[name="room_number"]').val();
-		if (playerName == '' || roomNumber == '') {
-			$('#emptyInput').attr('style','visibility: visible;');
-			signIn();
-		}
-		else {
-			gameInit();
-		}
-	},
-	closeSelector: ".confirm"
-	});
-}
-
 function onWindowResize() {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
@@ -266,7 +258,7 @@ function getRealIntersector( intersects ) {
 
 		intersector = intersects[ i ];
 
-		if ( intersector.object != rollOverMesh ) {
+		if ( intersector.object != rollOverMesh && intersector.object != movingPlane) {
 
 			return intersector;
 
@@ -394,8 +386,11 @@ function render() {
 
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
-
-	camera.lookAt( scene.position );
+	camera.position.y = (Date.now() - initialTime ) * SPEED + INITIAL_CAMERA_HEIGHT;
+	
+	movingPlane.position.y = (Date.now() - initialTime ) * SPEED;
+	
+	camera.lookAt( new THREE.Vector3(0,(Date.now() - initialTime ) * SPEED,0));
 
 	renderer.render( scene, camera );
 
@@ -417,7 +412,8 @@ function addVoxel(position, materialColor) {
 	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
-
+	if (position.z > highestLevel)
+		highestLevel = position.z;
 	scene.add( voxel );
 }
 
@@ -441,10 +437,13 @@ function movePlayer(position) {
 	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	player.updateMatrix();
+	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = EMPTY_CELL;
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
-	worldMap[position.x][position.y][position.z] = -1;
+	worldMap[position.x][position.y][position.z] = PLAYER_CELL;
+	if (position.z > highestLevel)
+		highestLevel = position.z;
 }
 
 function waterFlow() {
@@ -468,6 +467,8 @@ function addBonus( position ) {
 	bonus.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	bonus.matrixAutoUpdate = false;
 	bonus.updateMatrix();
-
+	worldMap[position.x][position.y][position.z] = BONUS_CELL;
+	if (position.z > highestLevel)
+		highestLevel = position.z;
 	scene.add( bonus );
 }
