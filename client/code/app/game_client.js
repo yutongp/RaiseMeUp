@@ -57,7 +57,7 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			if (getCellType(data[1]) == 0) {				
+			if (getCellType(data[1]) == 0 && blocksLeft > 0) {				
 				addVoxel( data[1], parseInt(data[2]) );
 				setWorldMap(data[1], VOXEL_CELL);
 				blocksLeft = blocksLeft - 1;
