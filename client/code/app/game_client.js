@@ -356,6 +356,8 @@ function setVoxelPosition( intersector ) {
 	
 	if (index.x == playerPosition.x && index.y == playerPosition.y && index.z == playerPosition.z)
 		return;
+	if (index.x >= gridCellNumber || index.y >= gridCellNumber)
+		return;
 	
 	for (var i = 0; i < unCountedObjectArray.length; i++){
 		var object = unCountedObjectArray[i];
