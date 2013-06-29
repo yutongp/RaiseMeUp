@@ -2,8 +2,8 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
-var PLAYER_CELL = 100;
-var BONUS_CELL = 666;
+var PLAYER_CELL = -1;
+var BONUS_CELL = -2;
 var SPEED = 150 / 7200;
 
 var INITIAL_CAMERA_HEIGHT = 800;
@@ -28,6 +28,8 @@ var gridCellNumber = 10;
 var gridHeight = 11;
 var worldMap = new Array();
 var waterPosition = 0;
+var oldWaterPostion = 0;
+var worldIndex = 0;
 
 var playerPosition = new Object();
 var playerGeo;
@@ -37,7 +39,6 @@ var player;
 var bonusGeo;
 var bonusMaterial;
 
-var highestLevel;
 var initialTime;
 
 $(document).ready(function() {
@@ -57,9 +58,9 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			addVoxel( data[1], parseInt(data[2]) );
-			worldMap[data[1].x][data[1].y][data[1].z - waterPosition] = VOXEL_CELL;
+			setWorldMap(data[1], VOXEL_CELL);
 			blocksLeft = blocksLeft - 1;
-			document.getElementById('blockNum').innerHTML = blocksLeft.toString();
+			document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
 		}
 	});
 
@@ -86,7 +87,6 @@ function requireReward(numReward, lastReward) {
 
 function gameboard_init() {
 	initialTime = Date.now();
-	highestLevel = 0;
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
@@ -225,7 +225,8 @@ function gameboard_init() {
 
 function signIn() {
 	$('#sign_up').lightbox_me({
-		centered: true,
+	centered: true,
+	closeClick: false,
 	onLoad: function() {
 		$('#sign_up').find('input:first').focus()
 	},
@@ -415,8 +416,6 @@ function addVoxel(position, materialColor) {
 	voxel.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
-	if (position.z > highestLevel)
-		highestLevel = position.z;
 	scene.add( voxel );
 }
 
@@ -435,9 +434,6 @@ function movePlayer(position) {
 		return;
 	///////
 
-	if (worldMap[position.x][position.y][position.z - waterPosition] = 1) {}
-
-
 	///////
 
 	//webGL update bot object
@@ -447,29 +443,29 @@ function movePlayer(position) {
 	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	player.updateMatrix();
-
-	//update global var
-	playerPosition.x = position.x;
-	playerPosition.y = position.y;
-	playerPosition.z = position.z;
-
+	
 	//update world map
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z - waterPosition] = EMPTY_CELL;
+	setWorldMap(playerPosition, EMPTY_CELL);
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z - waterPosition] = PLAYER_CELL;
-	if (position.z > highestLevel)
-		highestLevel = position.z;
+	setWorldMap(playerPosition, PLAYER_CELL);
 }
 
-function waterFlow() {
+function waterFlow(waterPos) {
 	//wrap world map
-	if ( (waterPosition + 1) == gridHeight) {
-		waterPosition = 0;
-	} else {
-		waterPosition++;
+	if ( waterPos - oldWaterPosition >=1 ) {
+		if (worldIndex + 1 == gridHeight)
+			worldIndex = 0;
+		else
+			worldIndex = worldIndex + 1;
+		oldWaterPosition = waterPos;
 	}
+}
+
+function setWorldMap(position, type) {
+	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
+	worldMap[position.x][position.y][newZ] = type;
 }
 
 function addBonus( position ) {
@@ -487,8 +483,7 @@ function addBonus( position ) {
 	bonus.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	bonus.matrixAutoUpdate = false;
 	bonus.updateMatrix();
-	worldMap[position.x][position.y][position.z] = BONUS_CELL;
-	if (position.z > highestLevel)
-		highestLevel = position.z;
+	setWorldMap(position, BONUS_CELL);
+	//worldMap[position.x][position.y][position.z] = BONUS_CELL;
 	scene.add( bonus );
 }
