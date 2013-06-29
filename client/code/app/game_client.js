@@ -46,6 +46,9 @@ var initialTime;
 var startTime = 0;
 var countdownSecond = 10;
 var clock;
+var clock2;
+var score = 0;
+var gameOverPosition = -1;
 
 var rewardHash = new Array();
 
@@ -131,11 +134,17 @@ function requireReward(numReward, lastReward) {
 function gameCountDown() {
 	countdownSecond --;
 	if (countdownSecond >= 0)
-		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br><br>';
+		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br>';
 	else {
-		$('#countDown').attr('style','display: none;');
-		clock=window.clearInterval(clock);
+		$('#countdownBoard').attr('style','display: none;');
+		clock2 = self.setInterval(function(){countScore()},100);
+		clock = window.clearInterval(clock);
 	}		
+}
+
+function countScore(){
+	score = score + 77;
+	document.getElementById('scoreboard').innerHTML = score.toString();	
 }
 
 function gameboard_init() {
@@ -168,14 +177,18 @@ function gameboard_init() {
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
 
+	var countdownBoard = document.createElement('div');
+	countdownBoard.id = 'countdownBoard';
+	countdownBoard.innerHTML = '<br><div id="countDown">Start flooding in...<br><a id="countSecond">10<br></a>';
+
 	var info = document.createElement('div');
 	info.id = 'info';
-	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="countDown">Start flooding in...<br><a id="countSecond">10<br><br></a>';
+	info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+	container.appendChild(countdownBoard);
 	container.appendChild(info);
 
 	initialTime = Date.now();
 	clock=self.setInterval(function(){gameCountDown()},1000);
-
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
 
@@ -330,6 +343,19 @@ function signIn() {
 	closeSelector: ".confirm"
 	});
 }
+
+function gameOver() {
+	clock2 = window.clearInterval(clock2);
+	$('#gameOver_popup').lightbox_me( {
+	centered: true,
+	closeClick: false,
+	onLoad: function() {
+		document.getElementById('scored').innerHTML = score;
+		document.getElementById('highest').innerHTML = waterPosition;
+	}
+	});
+} 
+
 function onWindowResize() {
 	windowHalfX = window.innerWidth / 2;
 	windowHalfY = window.innerHeight / 2;
@@ -340,7 +366,6 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
-
 
 function getRealIntersector( intersects ) {
 
@@ -592,6 +617,11 @@ function render() {
 	waterFlow(waterPosition);
 	
 	theta = -targetRotation * 10;
+	// check if game overs
+	if (playerPosition.z + 1 <= waterPosition && playerPosition.z != gameOverPosition){
+		gameOverPosition = playerPosition.z;
+		gameOver();
+	}
 
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
