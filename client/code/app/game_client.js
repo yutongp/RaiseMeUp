@@ -65,10 +65,7 @@ var mouseDown = false;
 
 
 $(document).ready(function() {
-	//ev.preventDefault();
-	signIn();
 	showInstruction();
-	//signIn();
 });
 
 var sound = new Howl({
