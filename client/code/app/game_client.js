@@ -24,8 +24,6 @@ $(document).ready(function() {
 
 function gameInit() {
 	setSocket();
-	gameboard_init();
-	animate();
 
 	ss.event.on('addBox', function(data, channelNumber) {
 		if (data[0] == 0) {
@@ -36,6 +34,8 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			addVoxel( data[1], parseInt(data[2]) );
+			blocksLeft = blocksLeft - 1;
+			document.getElementById('blockNum').innerHTML = blocksLeft.toString();		
 		}
 	});
 
@@ -48,8 +48,9 @@ function gameInit() {
 function setSocket() {
 	ss.rpc('demo.connectGame', playerName, roomNumber, function(initData) {
 		blocksLeft = initData;
+		gameboard_init();
+		animate();
 	});
-
 }
 
 
@@ -64,10 +65,9 @@ function gameboard_init() {
 	var height = window.innerHeight - 90;
 	info.id = 'info';
 	info.style.top = height.toString()+'px';
-	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left:</a></div>';
+	info.innerHTML = '<div id="team"><a>Active players in this room:</a></div><div id="status"><a>Number of cubes left: </a><a id="blockNum">'+blocksLeft+'</a></div>';
 	container.appendChild(info);
-
-
+	
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
 
@@ -90,10 +90,11 @@ function gameboard_init() {
 
 	//console.log(parseFloat(cubecolorfeed));
 	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+	document.getElementById('team').innerHTML = $('#team').html()+' <a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
 
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0x00ff80, shading: THREE.FlatShading } );
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
-	cubeMaterial.ambient = cubeMaterial.color;
+	
 
 	// picking
 
@@ -268,8 +269,6 @@ function onDocumentKeyUp( event ) {
 
 }
 
-//
-
 function animate() {
 
 	requestAnimationFrame( animate );
@@ -319,7 +318,7 @@ function addVoxel(index, materialColor) {
 		return;
 	if (index.z < 0) 
 		return;
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0x00ff80, shading: THREE.FlatShading } );
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0xffffff, shading: THREE.FlatShading } );
 	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = index.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
