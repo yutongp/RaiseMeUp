@@ -71,6 +71,13 @@ $(document).ready(function() {
 	//signIn();
 });
 
+var sound = new Howl({
+urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg']
+});
+
+
+
+
 
 function gameInit() {
 	setSocket();
@@ -676,6 +683,7 @@ function render() {
 		gameOver();
 	}
 
+
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
@@ -724,6 +732,9 @@ function addVoxel(position, materialColor) {
 	voxel.matrixAutoUpdate = false;
 	voxel.updateMatrix();
 	scene.add( voxel );
+
+
+	sound.play();
 }
 
 function movePlayer(position) {
