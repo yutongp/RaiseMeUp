@@ -43,9 +43,7 @@ var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 
 var initialTime;
 var startTime = 0;
-var countdownSecond = 10;
 var clock;
-var clock2;
 var score = 0;
 var gameOverPosition = -1;
 
@@ -110,20 +108,13 @@ function requireReward(numReward, lastReward) {
 	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
 }
 
-function gameCountDown() {
-	countdownSecond --;
-	if (countdownSecond >= 0)
-		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br>';
-	else {
-		$('#countdownBoard').attr('style','display: none;');
-		clock2 = self.setInterval(function(){countScore()},100);
-		clock = window.clearInterval(clock);
-	}		
-}
-
 function countScore(){
-	score = score + 77;
-	document.getElementById('scoreboard').innerHTML = score.toString();	
+	if (Date.now() - initialTime > 2000) {
+		score = score + 77;
+		if (window.innerWidth < 500)
+			document.getElementById('scoreboard-d').innerHTML = score.toString();	
+		else document.getElementById('scoreboard').innerHTML = score.toString();
+	}
 }
 
 function gameboard_init() {
@@ -152,18 +143,20 @@ function gameboard_init() {
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
 
-	var countdownBoard = document.createElement('div');
-	countdownBoard.id = 'countdownBoard';
-	countdownBoard.innerHTML = '<br><div id="countDown">Start flooding in...<br><a id="countSecond">10<br></a>';
-
 	var info = document.createElement('div');
-	info.id = 'info';
-	info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
-	container.appendChild(countdownBoard);
-	container.appendChild(info);
+	if (window.innerWidth < 500) { //Detect devices
+		info.id = 'info-d';
+		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+blocksLeft+'</a></div><br>';
+                container.appendChild(info);
+	}
+	else {
+		info.id = 'info';
+		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+		container.appendChild(info);
+	}
 
 	initialTime = Date.now();
-	clock=self.setInterval(function(){gameCountDown()},1000);
+	clock=self.setInterval(function(){countScore()},100);
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
 
@@ -187,7 +180,8 @@ function gameboard_init() {
 
 	//console.log(parseFloat(cubecolorfeed));
 	cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
-	document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
+	if (window.innerWidth > 500)
+		document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
 
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
 
@@ -293,7 +287,7 @@ function showInstruction() {
         centered: true,
         closeClick: false,
         onLoad: function() {
-                $('#sign_up').find('input:first').focus()
+                $('#instruction').find('button').focus()
         },
         onClose: function() {
                 signIn();
@@ -325,7 +319,7 @@ function signIn() {
 }
 
 function gameOver() {
-	clock2 = window.clearInterval(clock2);
+	clock = window.clearInterval(clock);
 	$('#gameOver_popup').lightbox_me( {
 	centered: true,
 	closeClick: false,
@@ -657,7 +651,9 @@ function checkReward(position) {
 	if (getCellType(position) == BONUS_CELL) {
 		console.log("dadwada!!!!!!!");
 		blocksLeft += 9999;
-		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+		if (window.innerWidth < 500)
+			document.getElementById('blockNum-d').innerHTML = blocksLeft.toString()+'<br><br>';
+		else document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
 	}
 }
 
