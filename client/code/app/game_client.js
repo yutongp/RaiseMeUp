@@ -222,13 +222,11 @@ function gameboard_init() {
 						}
 					}
 				}
-				if (window.innerWidth > 600)
-					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
-				for ( var m = 0;  m < worldData.players.length; m++) {
+			}
+			for ( var m = 0;  m < worldData.players.length; m++) {
 
-					if (window.innerWidth > 600) {
-						document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+playerc.substring(2)+';">'+playern+'</a>';	
-					}
+				if (window.innerWidth > 600 && worldData.players[m] != playerName) {
+					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+worldData.playercolors[m].substring(2)+';">'+worldData.players[m]+'</a>';	
 				}
 			}
 
