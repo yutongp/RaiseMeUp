@@ -1,7 +1,7 @@
 // Server-side Code
 var rewardCubeHeightRange = 9;
 var rewardCubeDistanceRange = 9;
-var bounds = {maxX: 10, maxY: 10};
+var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 var heightDeltaRange = 6;
 var MaxReward = 5;
 var visited  = 1000
@@ -23,72 +23,72 @@ function Room (roomn) {
 
 
 var getPath = function(world,startCube,targetCube){
-    //0 >; 1 ^ ; 2 < ; v
-    path = [];
-    queue = [];
-    queue.push(startCube);
-    world[startCube.x][startCube.y][startCube.z] = fromNothing;
-    
-    
-    
-    while(queue.length!=0){
-        var cube = queue.shift();
-        if(xyzMatch(cube,targetCube)){
-            var currentCube = cube;
-            while(!xyzMatch(currentCube,startCube)){
-                var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
-                path.push(fromDirection);
-                if(fromDirection == fromRight){
-                    currentCube = canGoRight(currentCube,world);
-                }
-                
-                if(fromDirection == fromLeft){
-                    currentCube = canGoLeft(currentCube,world);
-                }
-                
-                if(fromDirection == fromBot){
-                    currentCube = canGoDown(currentCube,world);
-                }
-                
-                if(fromDirection == fromUp){
-                    currentCube = canGoUp(currentCube,world);
-                }
-                
-            }        
-            return path;
-        }else{
-            
-            
-            var nextCube = canGoLeft(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
-                queue.push(nextCube);
-            }
-            
-            nextCube = canGoRight(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
-                queue.push(nextCube);
-            }
-            
-            nextCube = canGoUp(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
-                queue.push(nextCube);
-            }
-            
-            nextCube = canGoDown(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
-                queue.push(nextCube);
-            }
-            
-        
-        }
-    
-    }
+	//0 >; 1 ^ ; 2 < ; v
+	path = [];
+	queue = [];
+	queue.push(startCube);
+	world[startCube.x][startCube.y][startCube.z] = fromNothing;
 
-    return path;
+
+
+	while(queue.length!=0){
+		var cube = queue.shift();
+		if(xyzMatch(cube,targetCube)){
+			var currentCube = cube;
+			while(!xyzMatch(currentCube,startCube)){
+				var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
+				path.push(fromDirection);
+				if(fromDirection == fromRight){
+					currentCube = canGoRight(currentCube,world);
+				}
+
+				if(fromDirection == fromLeft){
+					currentCube = canGoLeft(currentCube,world);
+				}
+
+				if(fromDirection == fromBot){
+					currentCube = canGoDown(currentCube,world);
+				}
+
+				if(fromDirection == fromUp){
+					currentCube = canGoUp(currentCube,world);
+				}
+
+			}
+			return path;
+		}else{
+
+
+			var nextCube = canGoLeft(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
+				queue.push(nextCube);
+			}
+
+			nextCube = canGoRight(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
+				queue.push(nextCube);
+			}
+
+			nextCube = canGoUp(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
+				queue.push(nextCube);
+			}
+
+			nextCube = canGoDown(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
+				queue.push(nextCube);
+			}
+
+
+		}
+
+	}
+
+	return path;
 
 
 }
@@ -97,85 +97,85 @@ var getPath = function(world,startCube,targetCube){
 
 
 var getPath2 = function(world,startCube,targetCube){
-    //0 >; 1 ^ ; 2 < ; v
-    queue = [];
-    queue.push(startCube);
-    world[startCube.x][startCube.y][startCube.z] = fromNothing;
-    
-    var cloestCube = startCube;
-    var minDist = 9999;
-    
-    
-    while(queue.length!=0){
-        var cube = queue.shift();
-        
-        var dist = blocksNeedBetweenTwoReward(cube,targetCube)
-        if(minDist > dist){
-            minDist = dist;
-            cloestCube = cube;
-        }
-        if(xyzMatch(cube,targetCube)){
-            cloestCube = cube;
-            break;           
-        }else{
-            
-            
-            var nextCube = canGoLeft(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
-                queue.push(nextCube);               
-            }
-            
-            nextCube = canGoRight(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
-                queue.push(nextCube);
-                
-            }
-            
-            nextCube = canGoUp(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
-                queue.push(nextCube);
-            }
-            
-            nextCube = canGoDown(cube,world);
-            if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
-                world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
-                queue.push(nextCube);
-            }
-            
-            
-        }
-        
-    }
-    
-    path = [];
-    var currentCube = cloestCube;
-    while(!xyzMatch(currentCube,startCube)){        
-        var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
-        path.push(fromDirection);
-        if(fromDirection == fromRight){
-            currentCube = canGoRight(currentCube,world);
-        }
-        
-        if(fromDirection == fromLeft){
-            currentCube = canGoLeft(currentCube,world);
-        }
-        
-        if(fromDirection == fromBot){
-            currentCube = canGoDown(currentCube,world);
-        }
-        
-        if(fromDirection == fromUp){
-            currentCube = canGoUp(currentCube,world);
-        }
-        
-    }
-    
-    return path;
-    
-    
+	//0 >; 1 ^ ; 2 < ; v
+	queue = [];
+	queue.push(startCube);
+	world[startCube.x][startCube.y][startCube.z] = fromNothing;
+
+	var cloestCube = startCube;
+	var minDist = 9999;
+
+
+	while(queue.length!=0){
+		var cube = queue.shift();
+
+		var dist = blocksNeedBetweenTwoReward(cube,targetCube)
+			if(minDist > dist){
+				minDist = dist;
+				cloestCube = cube;
+			}
+		if(xyzMatch(cube,targetCube)){
+			cloestCube = cube;
+			break;           
+		}else{
+
+
+			var nextCube = canGoLeft(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromRight;
+				queue.push(nextCube);               
+			}
+
+			nextCube = canGoRight(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromLeft;
+				queue.push(nextCube);
+
+			}
+
+			nextCube = canGoUp(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromBot;
+				queue.push(nextCube);
+			}
+
+			nextCube = canGoDown(cube,world);
+			if(nextCube.z!=-2&&world[nextCube.x][nextCube.y][nextCube.z]>visited){
+				world[nextCube.x][nextCube.y][nextCube.z] = fromUp;
+				queue.push(nextCube);
+			}
+
+
+		}
+
+	}
+
+	path = [];
+	var currentCube = cloestCube;
+	while(!xyzMatch(currentCube,startCube)){        
+		var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];
+		path.push(fromDirection);
+		if(fromDirection == fromRight){
+			currentCube = canGoRight(currentCube,world);
+		}
+
+		if(fromDirection == fromLeft){
+			currentCube = canGoLeft(currentCube,world);
+		}
+
+		if(fromDirection == fromBot){
+			currentCube = canGoDown(currentCube,world);
+		}
+
+		if(fromDirection == fromUp){
+			currentCube = canGoUp(currentCube,world);
+		}
+
+	}
+
+	return path;
+
+
 }
 
 
@@ -183,149 +183,149 @@ var getPath2 = function(world,startCube,targetCube){
 
 //x - 1
 function canGoLeft(cube,world){
-    
-    var nextCube = cube;
-    nextCube = cube;
-    nextCube.x -= 1;
-    
-    if(cube.x-1<bounds.minX){
-        nextCube.z = -2;
-        return nextCube;
-    }
-    
-    if((cube.z=-1||world[cube.x-1][cube.y][cube.z]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
-        
-        return nextCube;
-    }
-    
-    if(cube.z>-1&&world[cube.x-1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x-1][cube.y][cube.z-1]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
-        
-        nextCube.z -= 1;
-        return nextCube;
-    }
-    
-    if(world[cube.x-1][cube.y][cube.z+1]>=1&&world[cube.x-1][cube.y][cube.z+2]==0){
-        nextCube.z += 1;
-        return nextCube;
-    }
-    
-    
-    nextCube.z = -2;
-    
-    return nextCube;
+
+	var nextCube = cube;
+	nextCube = cube;
+	nextCube.x -= 1;
+
+	if(cube.x-1<bounds.minX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z=-1||world[cube.x-1][cube.y][cube.z]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x-1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x-1][cube.y][cube.z-1]>=1)&&world[cube.x-1][cube.y][cube.z+1]==0){
+
+		nextCube.z -= 1;
+		return nextCube;
+	}
+
+	if(world[cube.x-1][cube.y][cube.z+1]>=1&&world[cube.x-1][cube.y][cube.z+2]==0){
+		nextCube.z += 1;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
 
 }
 
 //x+1
 function canGoRight(cube,world){
-    
-    var nextCube = cube;
-    nextCube = cube;
-    nextCube.x += 1;
-    
-    if(cube.x+1>bounds.maxX){
-        nextCube.z = -2;
-        return nextCube;
-    }
-    
-    if((cube.z=-1||world[cube.x+1][cube.y][cube.z]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
-        
-        return nextCube;
-    }
-    
-    if(cube.z>-1&&world[cube.x+1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x+1][cube.y][cube.z-1]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
-        
-        nextCube.z -= 1;
-        return nextCube;
-    }
-    
-    if(world[cube.x+1][cube.y][cube.z+1]>=1&&world[cube.x+1][cube.y][cube.z+2]==0){
-        nextCube.z += 1;
-        return nextCube;
-    }
-    
-    
-    nextCube.z = -2;
-    
-    return nextCube;
-    
+
+	var nextCube = cube;
+	nextCube = cube;
+	nextCube.x += 1;
+
+	if(cube.x+1>bounds.maxX){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z=-1||world[cube.x+1][cube.y][cube.z]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x+1][cube.y][cube.z]==0&&(cube.z==0||world[cube.x+1][cube.y][cube.z-1]>=1)&&world[cube.x+1][cube.y][cube.z+1]==0){
+
+		nextCube.z -= 1;
+		return nextCube;
+	}
+
+	if(world[cube.x+1][cube.y][cube.z+1]>=1&&world[cube.x+1][cube.y][cube.z+2]==0){
+		nextCube.z += 1;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+
 }
 
 //y-1
 function canGoUp(cube,world){
-    
-    var nextCube = cube;
-    nextCube = cube;
-    nextCube.y -= 1;
-    
-    if(cube.y-1<bounds.minY){
-        nextCube.z = -2;
-        return nextCube;
-    }
-    
-    if((cube.z=-1||world[cube.x][cube.y-1][cube.z]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
-        
-        return nextCube;
-    }
-    
-    if(cube.z>-1&&world[cube.x][cube.y-1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y-1][cube.z-1]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
-        
-        nextCube.z -= 1;
-        return nextCube;
-    }
-    
-    if(world[cube.x][cube.y-1][cube.z+1]>=1&&world[cube.x][cube.y-1][cube.z+2]==0){
-        nextCube.z += 1;
-        return nextCube;
-    }
-    
-    
-    nextCube.z = -2;
-    
-    return nextCube;
-    
+
+	var nextCube = cube;
+	nextCube = cube;
+	nextCube.y -= 1;
+
+	if(cube.y-1<bounds.minY){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z=-1||world[cube.x][cube.y-1][cube.z]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y-1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y-1][cube.z-1]>=1)&&world[cube.x][cube.y-1][cube.z+1]==0){
+
+		nextCube.z -= 1;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y-1][cube.z+1]>=1&&world[cube.x][cube.y-1][cube.z+2]==0){
+		nextCube.z += 1;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+
 }
 
 
 //y+1
 function canGoDown(cube,world){
-    
-    var nextCube = cube;
-    nextCube = cube;
-    nextCube.y += 1;
-    
-    if(cube.y+1<bounds.maxY){
-        nextCube.z = -2;
-        return nextCube;
-    }
-    
-    if((cube.z=-1||world[cube.x][cube.y+1][cube.z]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
-        
-        return nextCube;
-    }
-    
-    if(cube.z>-1&&world[cube.x][cube.y+1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y+1][cube.z-1]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
-        
-        nextCube.z -= 1;
-        return nextCube;
-    }
-    
-    if(world[cube.x][cube.y+1][cube.z+1]>=1&&world[cube.x][cube.y+1][cube.z+2]==0){
-        nextCube.z += 1;
-        return nextCube;
-    }
-    
-    
-    nextCube.z = -2;
-    
-    return nextCube;
-    
+
+	var nextCube = cube;
+	nextCube = cube;
+	nextCube.y += 1;
+
+	if(cube.y+1<bounds.maxY){
+		nextCube.z = -2;
+		return nextCube;
+	}
+
+	if((cube.z=-1||world[cube.x][cube.y+1][cube.z]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+
+		return nextCube;
+	}
+
+	if(cube.z>-1&&world[cube.x][cube.y+1][cube.z]==0&&(cube.z==0||world[cube.x][cube.y+1][cube.z-1]>=1)&&world[cube.x][cube.y+1][cube.z+1]==0){
+
+		nextCube.z -= 1;
+		return nextCube;
+	}
+
+	if(world[cube.x][cube.y+1][cube.z+1]>=1&&world[cube.x][cube.y+1][cube.z+2]==0){
+		nextCube.z += 1;
+		return nextCube;
+	}
+
+
+	nextCube.z = -2;
+
+	return nextCube;
+
 }
 
 
 
 function xyzMatch(cube1,cube2){
-    return (cube1.x==cube2.x)&&(cube1.y==cube2.y)&&(cube1.z==cube2.z);
+	return (cube1.x==cube2.x)&&(cube1.y==cube2.y)&&(cube1.z==cube2.z);
 }
 
 var getReward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
@@ -349,25 +349,27 @@ function blocksNeedBetweenTwoReward(r1,r2)
 var getRewardCubePosition = function (numOfReward,curHigestReward){
 	rewardCubes = new Array();
 
-	for(i = 0; i < numOfReward; i++){
+	var temp = new Object();
+	temp = curHigestReward;
+	for( var i = 0; i < numOfReward; i++){
 
-		var newX = Math.random()*(bounds.maxX-bounds.minX)+bounds.minX;
-		var newY = Math.random()*(bounds.maxY-bounds.minY)+bounds.minY;
-		if(newX == curHigestReward.x){
+		var newX = Math.floor(Math.random()*(bounds.maxX-bounds.minX))+bounds.minX;
+		var newY = Math.floor(Math.random()*(bounds.maxY-bounds.minY))+bounds.minY;
+		if(newX == temp.x){
 			newX+=1;
 		}
-		if(newY == curHigestReward.y){
+		if(newY == temp.y){
 			newY+=1;
 		}
 
-		var newZ;
-		newZ += Math.random()*heightDeltaRange;
+		var newZ = temp.z;
+		newZ += Math.floor(Math.random()*heightDeltaRange);
 
-		curHigestReward.x = newX;
-		curHigestReward.y = newY;
-		curHigestReward.z = newZ;
-		rewardCubes[i] = curHigestReward;
-
+		temp = new Object();
+		temp.x = newX;
+		temp.y = newY;
+		temp.z = newZ;
+		rewardCubes[i] = temp;
 	}
 	return rewardCubes;
 }
