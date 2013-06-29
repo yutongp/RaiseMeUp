@@ -182,8 +182,9 @@ function gameboard_init() {
 	plane = new THREE.Mesh( new THREE.PlaneGeometry( gridSize, gridSize, gridCellNumber, gridCellNumber ), new THREE.MeshBasicMaterial( { color: 0x555555, wireframe: true } ) );
 	plane.rotation.x = - Math.PI / 2;
 	scene.add( plane );
-	
-	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true } ) );
+	var waterMaterial = new THREE.MeshBasicMaterial( { color: 0x00aaaa, opacity: 0.2, transparent: true} );
+	waterMaterial.depthTest = false;
+	movingPlane = new THREE.Mesh( new THREE.CubeGeometry( gridSize, gridSize, 10 ), waterMaterial);
 	movingPlane.y = -100;
 	movingPlane.rotation.x = - Math.PI / 2;
 	scene.add( movingPlane );
