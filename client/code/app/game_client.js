@@ -41,16 +41,6 @@ var highestLevel;
 var initialTime;
 
 $(document).ready(function() {
-
-	var hammertime = $(document).hammer();
-
-	// the whole area
-	hammertime.on("drag", function(ev) {
-		ev.preventDefault();
-				    alert('you swiped!');
-				});
-
-
 	signIn();
 });
 
@@ -398,8 +388,6 @@ function render() {
 	}
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
-
-	console.log(waterPosition);
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
