@@ -42,6 +42,9 @@ var bonusMaterial;
 var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
 
 var initialTime;
+var startTime = 0;
+var countdownSecond = 10;
+var clock;
 
 var unCountedObjectArray;
 var previousIndex;
@@ -104,6 +107,16 @@ function requireReward(numReward, lastReward) {
 	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
 }
 
+function gameCountDown() {
+	countdownSecond --;
+	if (countdownSecond >= 0)
+		document.getElementById('countSecond').innerHTML = countdownSecond.toString()+'<br><br>';
+	else {
+		$('#countDown').attr('style','display: none;');
+		clock=window.clearInterval(clock);
+	}		
+}
+
 function gameboard_init() {
 	previousIndex = new Object();
 	previousIndex.x = 0;
@@ -111,6 +124,7 @@ function gameboard_init() {
 	previousIndex.z = 0;
 	unCountedObjectArray = new Array();
 	initialTime = Date.now();
+
 	for (var i = 0; i<gridCellNumber; i++) {
 		worldMap[i] = new Array();
 		for (var j = 0; j<gridCellNumber; j++){
@@ -131,8 +145,11 @@ function gameboard_init() {
 
 	var info = document.createElement('div');
 	info.id = 'info';
-	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a>';
+	info.innerHTML = '<div id="team"><br><a>Current players:</a></div><br><a>Number of </a><img src="http://i43.tinypic.com/2v8ka3b.jpg"><a> left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="countDown">Start flooding in...<br><a id="countSecond">10<br><br></a>';
 	container.appendChild(info);
+
+	initialTime = Date.now();
+	clock=self.setInterval(function(){gameCountDown()},1000);
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = INITIAL_CAMERA_HEIGHT;
@@ -501,7 +518,26 @@ function render() {
 	
 	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
 	renderer.render( scene, camera );
-
+	
+	//if (Date.now() - initialTime > 10000) {
+		//if (startTime == 0)
+			//startTime = Date.now();
+		//var currentWaterHeight = (Date.now() - startTime ) * SPEED;
+		//waterPosition = Math.floor(currentWaterHeight / gridCellSize);
+		//camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+		//camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+		//camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
+		//movingPlane.position.y = currentWaterHeight;
+		//camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
+		//renderer.render( scene, camera );
+	//}
+	//else {
+		//camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
+                //camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
+                //camera.position.y = INITIAL_CAMERA_HEIGHT;
+		//camera.lookAt( new THREE.Vector3(0,0,0));
+		//renderer.render( scene, camera );
+	//}
 }
 
 function addVoxel(position, materialColor) {
