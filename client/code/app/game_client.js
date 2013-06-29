@@ -387,15 +387,16 @@ function render() {
 		}
 
 	}
+	var currentWaterheight = (Date.now() - initialTime ) * SPEED;
+	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
-	camera.position.y = (Date.now() - initialTime ) * SPEED + INITIAL_CAMERA_HEIGHT;
+	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
 	
-	movingPlane.position.y = (Date.now() - initialTime ) * SPEED;
+	movingPlane.position.y = currentWaterHeight;
 	
-	camera.lookAt( new THREE.Vector3(0,(Date.now() - initialTime ) * SPEED,0));
-
+	camera.lookAt( new THREE.Vector3(0,currentWaterHeight,0));
 	renderer.render( scene, camera );
 
 }
