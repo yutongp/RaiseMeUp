@@ -4,8 +4,7 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-//var SPEED = 30 / 7200;
-var SPEED = 000000000;
+var SPEED = 30 / 7200;
 
 var INITIAL_CAMERA_HEIGHT = 800;
 
@@ -26,9 +25,10 @@ var cubecolor;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
-var gridHeight = 300;
+var gridHeight = 3000;
 var worldMap = new Array();
 var waterPosition = 0;
+var oldWaterPosition = 0;
 var oldWaterPostion = 0;
 var worldIndex = 0;
 
@@ -207,19 +207,19 @@ function gameboard_init() {
 		switch (e.which) {
 			case 115:
 				console.log('down');
-				next_position = canGoDown(new_position, worldMap, worldIndex, gridHeight, waterPosition);
+				next_position = canGoDown(new_position, worldMap, worldIndex, waterPosition);
 				break;
 			case 119:
 				console.log('up');
-				next_position = canGoUp(new_position, worldMap, worldIndex, gridHeight, waterPosition);
+				next_position = canGoUp(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			case 97:
 				console.log('left');
-				next_position = canGoLeft(new_position, worldMap, worldIndex, gridHeight, waterPosition);
+				next_position = canGoLeft(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			case 100:
 				console.log('right');
-				next_position = canGoRight(new_position, worldMap, worldIndex, gridHeight, waterPosition);
+				next_position = canGoRight(new_position, worldMap, worldIndex,  waterPosition);
 				break;
 			default:
 		}
@@ -401,6 +401,7 @@ function render() {
 	}
 	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
+	waterFlow(waterPosition);
 	camera.position.x = 1400 * Math.sin( THREE.Math.degToRad( theta ) );
 	camera.position.z = 1400 * Math.cos( THREE.Math.degToRad( theta ) );
 	camera.position.y = currentWaterHeight + INITIAL_CAMERA_HEIGHT;
@@ -448,6 +449,8 @@ function movePlayer(position) {
 
 	///////
 
+	position.z = WorldztoAbsoz(position.z);
+	checkReward(position);
 	//webGL update bot object
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
@@ -478,6 +481,22 @@ function waterFlow(waterPos) {
 function setWorldMap(position, type) {
 	var newZ = (position.z-waterPosition) % gridHeight + waterPosition;
 	worldMap[position.x][position.y][newZ] = type;
+}
+
+function checkReward(position) {
+	if (getCellType(position) == BONUS_CELL) {
+		console.log("dadwada!!!!!!!");
+		blocksLeft += 9999;
+		document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+	}
+}
+
+function WorldztoAbsoz(wz) {
+	if (wz >= worldIndex) {
+		return (wz - worldIndex + waterPosition);
+	} else {
+		return (waterPosition + gridHeight - (worldIndex - wz));
+	}
 }
 
 function getCellType(position) {
@@ -568,6 +587,13 @@ function canGoRight(cube, world, indexOffset, WaterOffset) {
 
 		return nextCube;
 	}
+
+	console.log(world[cube.x+1][cube.y][nextCube.z]);
+	console.log(world[cube.x+1][cube.y][down1Zindex]);
+	console.log(world[cube.x+1][cube.y][up1Zindex]);
+	console.log(nextCube);
+	console.log(WaterOffset);
+
 
 	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0&&WaterOffset==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
 

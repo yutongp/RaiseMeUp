@@ -12,7 +12,7 @@ var fromBot = 1004;// y - 1
 var fromNothing = 1005;
 var WaterOffset;
 var indexOffset;
-var gridHeight = 300;
+var gridHeight = 3000;
 
 
 var roomMap = {}
