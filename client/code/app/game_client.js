@@ -49,14 +49,17 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			addVoxel( data[1], parseInt(data[2]) );
-			worldMap[data[1].x][data[1].y][data[1].z] = 1;
+			worldMap[data[1].x][data[1].y][data[1].z - waterPosition] = 1;
 			blocksLeft = blocksLeft - 1;
 			document.getElementById('blockNum').innerHTML = blocksLeft.toString();		
 		}
 	});
 
 	ss.event.on('addRewardlist', function(data, channelNumber) {
-
+		for (var i = 0; i < data.length;i++) {
+			addBonus(data[i]);
+			console.log(data[i]);
+		}
 	});
 }
 
@@ -66,6 +69,11 @@ function setSocket() {
 		gameboard_init();
 		animate();
 	});
+}
+
+
+function requireReward(numReward, lastReward) {
+	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
 }
 
 function gameboard_init() {
@@ -81,6 +89,7 @@ function gameboard_init() {
 	playerPosition.y = 0;
 	playerPosition.z = 0;
 	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = -1;
+	requireReward(5, playerPosition);
 
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
@@ -201,11 +210,6 @@ function gameboard_init() {
 	});
 
 	window.addEventListener( 'resize', onWindowResize, false );
-	var bonusPosition = new Object();
-	bonusPosition.x = gridCellNumber / 2;
-	bonusPosition.y = gridCellNumber / 2;
-	bonusPosition.z = 0;
-	addBonus(bonusPosition);
 }
 
 function signIn() {
@@ -434,23 +438,37 @@ function movePlayer(position) {
 		return;
 	if (position.z < playerPosition.z || position.z - playerPosition.z > 1)
 		return;
+	///////
 
+	if (worldMap[position.x][position.y][position.z - waterPosition] = 1) {}
+
+
+	///////
+
+	//webGL update bot object
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
 	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
 	player.updateMatrix();
+
+	//update global var
 	playerPosition.x = position.x;
 	playerPosition.y = position.y;
 	playerPosition.z = position.z;
-	worldMap[position.x][position.y][position.z] = -1;
+
+	//update world map
+	worldMap[position.x][position.y][position.z - waterPosition] = -1;
 }
 
 function waterFlow() {
-	if (waterPosition+1 == gridHeight)
+	//wrap world map
+	if ( (waterPosition + 1) == gridHeight) {
 		waterPosition = 0;
-	else waterPosition ++;
+	} else {
+		waterPosition++;
+	}
 }
 
 function addBonus( position ) {
