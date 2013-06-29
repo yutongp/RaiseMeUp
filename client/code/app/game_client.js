@@ -21,6 +21,30 @@ $(document).ready(function() {
 	signIn();
 });
 
+
+function gameInit() {
+	setSocket();
+	gameboard_init();
+	animate();
+
+	ss.event.on('addBox', function(data, channelNumber) {
+		if (data[0] == 0) {
+			//from function onDocumentMouseDown
+			if ( data[1] != plane ) {
+				scene.remove( data[1] );
+			}
+		}
+		if (data[0] == 1) {
+			addVoxel( data[1], parseInt(data[2]) );
+		}
+	});
+
+	ss.event.on('addRewardlist', function(data, channelNumber) {
+
+	});
+}
+
+
 function setSocket() {
 	ss.rpc('demo.connectGame', playerName, roomNumber, function(err) {
 		if(err) {
@@ -32,19 +56,11 @@ function setSocket() {
 }
 
 
-function init() {
+function gameboard_init() {
 
 	container = document.createElement( 'div' );
 	container.setAttribute('id', 'game_board');
 	document.body.appendChild( container );
-
-	//var info = document.createElement( 'div' );
-	//info.style.position = 'absolute';
-	//info.style.top = '10px';
-	//info.style.width = '100%';
-	//info.style.textAlign = 'center';
-	//info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> - voxel painter - webgl<br><strong>click</strong>: add voxel, <strong>control + click</strong>: remove voxel, <strong>shift + click</strong>: rotate';
-	//container.appendChild( info );
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 800;
@@ -123,21 +139,7 @@ function signIn() {
 			onClose: function() {
 				playerName = $('input[name="player_name"]').val();
 				roomNumber = $('input[name="room_number"]').val();
-				setSocket();
-				init();
-				animate();
-
-				ss.event.on('addBox', function(data, channelNumber) {
-					if (data[0] == 0) {
-						//from function onDocumentMouseDown
-						if ( data[1] != plane ) {
-							scene.remove( data[1] );
-						}
-					}
-					if (data[0] == 1) {
-						addVoxel( data[1], parseInt(data[2]) );
-					}
-				});
+				gameInit();
 		},
 		closeSelector: ".confirm"
         });
