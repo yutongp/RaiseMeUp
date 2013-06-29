@@ -11,6 +11,7 @@ function Room (roomn) {
 	this.players = new Array();
 	this.blocks = 10;
 	this.roomNumber = roomn;
+	this.botposition = {x:0, y:0, z: 0};
 }
 
 
@@ -89,6 +90,7 @@ exports.actions = function(req, res, ss) {
 			if (roomMap[roomNumber] == undefined) {
 				roomMap[roomNumber] = new Room(roomNumber);
 			}
+
 			thisRoom = roomMap[roomNumber];
 			thisRoom.players.push(playerName);
 			req.session.channel.subscribe(roomNumber);
