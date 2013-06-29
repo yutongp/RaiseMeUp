@@ -9,7 +9,7 @@ var roomMap = {}
 
 function Room (roomn) {
 	this.players = new Array();
-	this.blocks = 0;
+	this.blocks = 10;
 	this.roomNumber = roomn;
 }
 
@@ -88,10 +88,11 @@ exports.actions = function(req, res, ss) {
 			roomMap[roomNumber] = new Room(roomNumber);
 			req.session.channel.subscribe(roomNumber);
 			return res(true);
-		}
+		},
 
-
-		
+		requireReward: function(numReward, lastReward, channel) {
+			ss.publish.channel(channel, 'addRewardlist', getReward(numReward, lastReward));
+		},
 	};
 
 };
