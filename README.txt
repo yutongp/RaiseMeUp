@@ -1,5 +1,4 @@
-  
-README: 
+README:
 ==========================================================
 RaiseMeUP - version 1.0 beta
  
@@ -21,8 +20,8 @@ FEATURES:
 
 - Strategic. Since the blocks available to the players are limited, players need to figure out how to minimize the number of steps to next reward.
 
--  Multi-platform. This game can be played on various devices with access to chrome web 
-browser. 
+-  Multi-platform. This game can be played on various devices with access to chrome web
+browser.
 
 -  3-Dimensional game with 360 views by swiping the screen or dragging the mouse.
   
@@ -30,8 +29,8 @@ HOW TO PLAY:
 
 You can access the game at :
 54.245.108.132/game
-Make sure you are not using the LAN network inside Amazon. 
-On Tablets:  Tap a desired place to see the shadow of the block. Tap again to confirm placement. Drag left or right to view the architecture from other angles. 
+Make sure you are not using the LAN network inside Amazon.
+On Tablets:  Tap a desired place to see the shadow of the block. Tap again to confirm placement. Drag left or right to view the architecture from other angles.
 On PC:  The shadow of a block moves with your cursor. Double click to place a block.
 Click and drag left or right to view from other angles.
  
@@ -49,14 +48,12 @@ Javascript, JQuery, WebGL, THREE.js, node.js, lightBoxMe.js, Socketstream, howle
 CONTRIBUTORS:
 
 Team Pong!
-Xinbei Weng: 		@xinbweng
-Yutong Pei: 		@yutonpei
-Yifei Huang: 		@huayifei
-Shi Qiu: 		@lucasqiu
-Yiwei Li: 		@yiweili
+Yifei Huang:	@huayifei
+Yiwei Li:		@yiweili
+Yutong Pei:		@yutonpei
+Shi Qiu:		@lucasqiu
+Xinbei Weng:	@xinbweng
  
 
 ACKNOWLEDGEMENT:
-Thanks to Amazon for organizing this hackathon to make this game happen. Also thanks to the authors of open source libraries used in this game. 
- 
-
+Thanks to Amazon for organizing this hackathon to make this game happen. Also thanks to the authors of open source libraries used in this game.
