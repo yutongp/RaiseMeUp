@@ -1,0 +1,62 @@
+  
+README: 
+==========================================================
+RaiseMeUP - version 1.0 beta
+ 
+INTRODUCTION:
+
+RaiseMeUp is a multiple-player, multiple-platform survival game. The key character in this game is named Pong, who is trapped in a deep underground mine due to accident. The water is rising in the mine. Now we need help from you to get her out.
+
+In order to save her, you need to build constructions with limited resources at hand to help her. You have limited amount of building blocks. The blocks or cubes can only be placed on ground or on other blocks. There are more resources on the way as Pong climb up higher. You need to aim for those resources in order to build higher building. Multiple players can play in a single game but they share the same voxel pool so remember to collaborate.
+
+Water is rising quickly and time never waits even for any merciful intention. The flood can take Pong’s life at any second if you cannot make a good architecture to let Pong climb up. 
+Pong is controlled by a player using a controller or a keyboard on computer. She has transformed into a pink ball in order to escape faster. She may have her own intelligence in the future.
+
+Instead of playing for saving Pong, you can also try to construct a well-designed trap to get Pong, which can be a lot of fun as well. Of course, just help keeping her from the water can be a little too easy for some of you geniuses. So show us your gift by making beautiful or funny architectures as you play.
+
+ 
+FEATURES:
+
+- Fast-paced. This game is driven by both the danger of being drowned and the rewards of building higher.
+
+- Strategic. Since the blocks available to the players are limited, players need to figure out how to minimize the number of steps to next reward.
+
+-  Multi-platform. This game can be played on various devices with access to chrome web 
+browser. 
+
+-  3-Dimensional game with 360 views by swiping the screen or dragging the mouse.
+  
+HOW TO PLAY:
+
+You can access the game at :
+54.245.108.132/game
+Make sure you are not using the LAN network inside Amazon. 
+On Tablets:  Tap a desired place to see the shadow of the block. Tap again to confirm placement. Drag left or right to view the architecture from other angles. 
+On PC:  The shadow of a block moves with your cursor. Double click to place a block.
+Click and drag left or right to view from other angles.
+ 
+
+SYSTEM REQUIREMENTS:
+
+You need a browser with WebGL support, preferably Chrome. To enable WebGL support on Androids, all you have to do is download the latest Chrome Beta from the Google Play store. Once installed, enter “chrome://flags/” (minus the quotes) into the URL bar, scroll down to ‘Enable WebGL’ and re-launch the browser.
+   
+
+TOOLS AND EXTERNAL PACKAGES:
+
+Javascript, JQuery, WebGL, THREE.js, node.js, lightBoxMe.js, Socketstream, howler.js
+
+ 
+CONTRIBUTORS:
+
+Team Pong!
+Xinbei Weng: 		@xinbweng
+Yutong Pei: 		@yutonpei
+Yifei Huang: 		@huayifei
+Shi Qiu: 		@lucasqiu
+Yiwei Li: 		@yiweili
+ 
+
+ACKNOWLEDGEMENT:
+Thanks to Amazon for organizing this hackathon to make this game happen. Also thanks to the authors of open source libraries used in this game. 
+ 
+
