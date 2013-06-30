@@ -43,6 +43,8 @@ function Room (roomn, itime) {
 }
 
 
+
+
 var getPath = function(world,startCube,targetCube){
 	//0 >; 1 ^ ; 2 < ; v
 	path = [];
