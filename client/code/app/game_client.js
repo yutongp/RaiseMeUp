@@ -4,7 +4,7 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED = 30 / 7200;
+var SPEED =  50 / 7200;
 
 var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
@@ -65,6 +65,15 @@ var targetRotationOnMouseDown = 0;
 var targetRotation = 0;
 var mouseDown = false;
 
+//#AI
+var moveDelay = 800; //ms
+var nextMoveCall;
+var visited  = 1000
+var fromLeft = 1001; // x + 1
+var fromRight = 1002;// x - 1
+var fromUp = 1003;// y + 1;
+var fromBot = 1004;// y - 1
+var fromNothing = 1005;
 
 $(document).ready(function() {
 	showInstruction();
@@ -355,6 +364,7 @@ function gameboard_init() {
 		switch (e.which) {
 			case 115:
 				console.log('down');
+                clearTimeout(nextMoveCall);
 				next_position = canGoDown(new_position, worldMap, worldIndex, waterPosition);
 				break;
 			case 119:
@@ -369,6 +379,26 @@ function gameboard_init() {
 				console.log('right');
 				next_position = canGoRight(new_position, worldMap, worldIndex,  waterPosition);
 				break;
+                       
+            case 61:
+                //#AI
+                console.log('ai start');
+                       var target = new Object();
+                       var nearestReward = getNearestReward();
+                       console.log("nearest: ",nearestReward);
+                       target.x = nearestReward.index.x;
+                       target.y = nearestReward.index.y;
+                       target.z = nearestReward.index.z - 1;
+                       var cP = new Object();
+                       cP.x = playerPosition.x;
+                       cP.y = playerPosition.y;
+                       cP.z = playerPosition.z - 1;
+                       path = getPath2(worldMap,cP,target);
+                console.log("path: ",path);
+                       aiMove(path);
+                break;
+            
+                       
 			default:
 		}
 		if (next_position.z != -2) {
@@ -383,6 +413,279 @@ function gameboard_init() {
 	window.addEventListener( 'resize', onWindowResize, false );
 }
 
+var getNearestReward = function(){
+    var minDist = 9999;
+    var nearestReward;
+    console.log("reward L: ",rewardHash.length)
+    for (var i = 0; i < rewardHash.length; i++) {
+        
+        if ((rewardHash[i] != undefined)&&rewardHash[i].index.z>=waterPosition) {
+            var dist = Math.abs(rewardHash[i].index.x-playerPosition.x);
+            dist+= Math.abs(rewardHash[i].index.y-playerPosition.y);
+            dist+= Math.abs(rewardHash[i].index.z-playerPosition.z);
+            console.log("dist: ",dist);
+            if(dist<minDist){
+                nearestReward = rewardHash[i];
+                minDist = dist;
+            }
+            //Fix Me consider water level;
+        }
+    }
+    return nearestReward;
+}
+
+function getPath3(){
+    var minDist = 9999;
+    var nearestReward;
+    var bestPath;
+    console.log("reward L: ",rewardHash.length)
+    for (var i = 0; i < rewardHash.length; i++) {
+        
+        if ((rewardHash[i] != undefined)&&rewardHash[i].index.z>=waterPosition) {
+            var target = new Object();
+            var nearestReward = getNearestReward();
+            console.log("nearest: ",nearestReward);
+            target.x = rewardHash[i].index.x;
+            target.y = rewardHash[i].index.y;
+            target.z = rewardHash[i].index.z - 1;
+            var cP = new Object();
+            cP.x = playerPosition.x;
+            cP.y = playerPosition.y;
+            cP.z = playerPosition.z - 1;
+            path = getPath2(worldMap,cP,target);
+            if (minDist>path.length){
+                minDist = path.length;
+                bestPath = path;
+            }
+            
+            //Fix Me consider water level;
+        }
+    }
+    return bestPath;
+
+
+
+}
+
+var getPath2 = function(world,startCube,targetCube){
+	//0 >; 1 ^ ; 2 < ; v
+	var queue = [];
+	queue.push(startCube);
+    console.log("start:", startCube);
+    console.log("target:",targetCube);
+	world[startCube.x][startCube.y][startCube.z] = fromNothing;
+    
+	var cloestCube = startCube;
+	var minDist = 9999;
+    var usedBlock = [];
+    
+    var tmpMap = new Array();
+    for (var i = 0; i<gridCellNumber; i++) {
+		tmpMap[i] = new Array();
+		for (var j = 0; j<gridCellNumber; j++){
+			tmpMap[i][j] = new Array();
+			for (var k = 0; k<gridHeight; k++)
+				tmpMap[i][j][k] = world[i][j][k];
+		}
+	}
+    world = tmpMap;
+    
+    
+    
+    
+	while(queue.length!=0){
+		var cube = queue.shift();
+        
+		var dist = blocksNeedBetweenTwoReward(cube,targetCube)
+        if(minDist > dist){
+            minDist = dist;
+            cloestCube = cube;
+        }
+		if(xyzMatch(cube,targetCube)){
+			cloestCube = cube;
+			break;
+		}else{
+            
+           
+            
+			var nextCube1 = canGoLeft(cube,world, worldIndex, waterPosition);
+			if(nextCube1.z!=-2&&!(world[nextCube1.x][nextCube1.y][nextCube1.z]>visited)&&nextCube1.z>waterPosition){
+				world[nextCube1.x][nextCube1.y][nextCube1.z] = fromRight;
+				queue.push(nextCube1);
+                console.log("push1: ",nextCube1);
+			}
+            //console.log("cube1: ",nextCube1);
+            
+			var nextCube2 = canGoRight(cube,world, worldIndex, waterPosition&&nextCube2.z>waterPosition);
+			if(nextCube2.z!=-2&&!(world[nextCube2.x][nextCube2.y][nextCube2.z]>visited)){
+				world[nextCube2.x][nextCube2.y][nextCube2.z] = fromLeft;
+				queue.push(nextCube2);
+                console.log("push2: ",nextCube2);
+			}
+            //console.log("cube2: ",nextCube2);
+			var nextCube3 = canGoUp(cube,world, worldIndex, waterPosition&&nextCube3.z>waterPosition);
+			if(nextCube3.z!=-2&&!(world[nextCube3.x][nextCube3.y][nextCube3.z]>visited)){
+				world[nextCube3.x][nextCube3.y][nextCube3.z] = fromBot;
+				queue.push(nextCube3);
+                console.log("push3: ",nextCube3);
+			}
+            //console.log("cube3: ",nextCube3);
+			var nextCube4 = canGoDown(cube,world, worldIndex, waterPosition&&nextCube4.z>waterPosition);
+			if(nextCube4.z!=-2&&!(world[nextCube4.x][nextCube4.y][nextCube4.z]>visited)){
+				world[nextCube4.x][nextCube4.y][nextCube4.z] = fromUp;
+				queue.push(nextCube4);
+                console.log("push4: ",nextCube4);
+			}
+            //console.log("cube4: ",nextCube4);
+            
+		}
+        
+	}
+    
+	var path = [];
+    console.log("cloestCube ",cloestCube);
+	var currentCube = cloestCube;
+	while(!xyzMatch(currentCube,startCube)){
+    //for(var i=0;i<10;i++){
+		var fromDirection = world[currentCube.x][currentCube.y][currentCube.z];       
+        /*var fromLeft = 1001; // x + 1
+        var fromRight = 1002;// x - 1
+        var fromUp = 1003;// y + 1;
+        var fromBot = 1004;// y - 1*/
+        switch (fromDirection) {
+			case 1003:
+				console.log('down');
+				path.push(115);
+				break;
+			case 1004:
+				console.log('up');
+				path.push(119);
+				break;
+			case 1002:
+				console.log('left');
+				path.push(97);
+				break;
+			case 1001:
+				console.log('right');
+				path.push(100);
+				break;              
+			default:
+		}
+        
+		if(fromDirection == fromRight){
+			currentCube = canGoRight(currentCube,world, worldIndex, waterPosition);
+		}
+        
+		if(fromDirection == fromLeft){
+			currentCube = canGoLeft(currentCube,world, worldIndex, waterPosition);
+		}
+        
+		if(fromDirection == fromBot){
+			currentCube = canGoDown(currentCube,world, worldIndex, waterPosition);
+		}
+        
+		if(fromDirection == fromUp){
+			currentCube = canGoUp(currentCube,world, worldIndex, waterPosition);
+		}
+        console.log("fromDirection: ",fromDirection," current: ",currentCube);
+    }
+	//}
+    console.log("hahaha",path);
+    var path2 = [];
+    while(path[0]!=undefined){
+        path2.push(path.pop());
+    }
+    console.log("path2: ",path2);
+	return path2;
+    
+}
+
+//#AI
+function xyzMatch(cube1,cube2){
+	return (cube1.x==cube2.x)&&(cube1.y==cube2.y)&&(cube1.z==cube2.z);
+}
+
+//#AI
+function findNewPath(){
+    console.log('ai start');
+    var target = new Object();
+    var nearestReward = getNearestReward();
+    console.log("nearest: ",nearestReward);
+    target.x = nearestReward.index.x;
+    target.y = nearestReward.index.y;
+    target.z = nearestReward.index.z - 1;
+    var cP = new Object();
+    cP.x = playerPosition.x;
+    cP.y = playerPosition.y;
+    cP.z = playerPosition.z - 1;
+    path = getPath2(worldMap,cP,target);
+    console.log("path: ",path);
+    aiMove(path);
+
+}
+
+//#AI
+function blocksNeedBetweenTwoReward(r1,r2)
+{
+	var distx = Math.abs(r1.x-r2.x);
+	var disty = Math.abs(r1.y-r2.y);
+	var distz = Math.abs(r1.z-r2.z);
+	if(distx+disty-distz<0){
+		distz = distz + (distz - distx - disty)*2
+	}
+	return distx+disty+distz;
+}
+
+
+function aiMove(path){
+    aiMoveHelper(path,0);
+}
+
+function aiMoveHelper(path,count){
+
+    if (count == path.length){
+        return;
+    }
+    
+    var new_position = new Object();
+    new_position.x = playerPosition.x;
+    new_position.y = playerPosition.y;
+    new_position.z = playerPosition.z - 1;
+    var next_position = new Object();
+    next_position.z = -2;
+    console.log("!!!",path[count]," ",count);
+    switch (path[count]) {
+        case 115:
+            console.log('down');
+            next_position = canGoDown(new_position, worldMap, worldIndex, waterPosition);
+            break;
+        case 119:
+            console.log('up');
+            next_position = canGoUp(new_position, worldMap, worldIndex,  waterPosition);
+            break;
+        case 97:
+            console.log('left');
+            next_position = canGoLeft(new_position, worldMap, worldIndex,  waterPosition);
+            break;
+        case 100:
+            console.log('right');
+            next_position = canGoRight(new_position, worldMap, worldIndex,  waterPosition);
+            break;
+            
+            
+        default:
+    }
+    if (next_position.z != -2) {
+        new_position.x = next_position.x;
+        new_position.y = next_position.y;
+        new_position.z = next_position.z+1;
+        console.log(i," ",new_position);
+        movePlayerWrapper(new_position);
+        nextMoveCall =  setTimeout(function(){aiMoveHelper(path,count+1)},moveDelay);
+    }
+
+
+}
 
 function movePlayerWrapper(new_position) {
 	new_position.z = (new_position.z) % gridHeight + worldIndex;
@@ -743,6 +1046,11 @@ function addVoxel(position, materialColor) {
 		return;
 	if (position.z < 0) 
 		return;
+    
+    //stop ai move #AI
+    clearTimeout(nextMoveCall);
+    nextMoveCall =  setTimeout( function(){findNewPath()},moveDelay);
+    
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: materialColor, ambient: 0xffffff, shading: THREE.FlatShading } );
 	var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
@@ -820,6 +1128,8 @@ function checkReward(position) {
 					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == position.z) {
 						scene.remove(rewardHash[i]);
 						rewardHash[i] = undefined;
+                        //#AI
+                        nextMoveCall =  setTimeout( function(){findNewPath()},500);
 					}
 				}
 		}
