@@ -77,7 +77,7 @@ function Room (roomn, itime) {
 
 
 function validPosition(position) {
-	if ((bounds.minX <= position.x <= bounds.maxX) && (bounds.minY <= position.y <= bounds.maxY)) {
+	if ((bounds.minX <= position.x <= bounds.maxX) && (bounds.minY <= position.y <= bounds.maxY) && position.z >= 0) {
 		return true;
 	} else {
 		return false;

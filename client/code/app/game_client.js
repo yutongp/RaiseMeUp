@@ -997,8 +997,8 @@ function onDocumentMouseDown( event ) {
 		}
 	} else {
 
-		if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
-			ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
+		if (xyzMatch(rollOverMesh.index, previousIndex)) {
+			ss.rpc('demo.clientMove', [1, rollOverMesh.index, localPlayer.color], localRoom.roomNumber);
 		}
 		previousIndex = rollOverMesh.index;
 	}
