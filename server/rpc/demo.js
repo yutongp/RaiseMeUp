@@ -77,7 +77,9 @@ function Room (roomn, itime) {
 
 
 function validPosition(position) {
-	if ((bounds.minX <= position.x <= bounds.maxX) && (bounds.minY <= position.y <= bounds.maxY) && position.z >= 0) {
+	if ((bounds.minX <= position.x) && (position.x <= bounds.maxX) &&
+			(bounds.minY <= position.y) && (position.y <= bounds.maxY) &&
+			(position.z >= 0)) {
 		return true;
 	} else {
 		return false;
@@ -528,6 +530,7 @@ exports.actions = function(req, res, ss) {
 		clientMove: function(data, channel) {
 			thisRoom = roomMap[channel];
 
+			console.log(data[1]);
 			if (!validPosition(data[1])) {
 				return res(false);
 			}
