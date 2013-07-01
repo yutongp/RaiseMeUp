@@ -4,7 +4,7 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var BOT_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED =  50 / 7200;
+var SPEED =  40 / 7200;
 
 var INITIAL_CAMERA_HEIGHT = 800;
 var INITBLOCKS = 50;
