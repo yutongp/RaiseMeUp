@@ -17,13 +17,32 @@
 		<SocketStream/>
 	</head>
 	<body>
+		<div id='instruction'>
+			<br><a>Welcome to RaiseMeUp!</a>
+			<br><br><a>Here are some instructions for you to get started:</a>
+			<br><br><a><b>Objective:</b> </a>
+			<br><a>Place cubes onto the grid to build pathways that helps the "round man" escape from the rising water.</a>
+			<br><br><a><b>Controls:</b></a>
+			<br><a>To place a cube: double click on the grid</a>
+			<br><a>To rotate views: click and drag the mouse</a>
+			<br><a>To trigger AI for the "round man":  press "=" on keyboard</a>
+			<br><a>To control "round man" movement yourself: keyboard "W", "A", "S", "D"</a>
+
+
+			<br><br><a><b>*Note:</b> Cubes are limited resources! Make sure you lead the "round man" to the coins to build higher! <br>
+			You can either play single player mode or play with others. You just need to share a room number.</a>
+
+			<br><br><button class='startGame'>Enter the game</button><br><br>
+		</div>
+
+
 		<div id='sign_up'>
-			<span>Welcome to RaiseMeUp!</span>
+			<span>Open a new room or join an existing room</span>
 			<form id="sign_up_form">
 				<div><a>Player Name: </a><input type="text" name="player_name"/></div>
 				<div><a>Room Number: </a><input type="text" name="room_number"/></div>
-				<button class="confirm">Enter the game!</button>
-				<div id='emptyInput'>* Please enter your name and a room number!</span>
+				<button class="confirm">Let's go!</button>
+				<div id='emptyInput'>* Please enter your name and a room number</span>
 			</form>
 		</div>
 		<div id='gameOver_popup'>
@@ -31,17 +50,6 @@
 			<a>Your score is: </a><a id='scored'></a><a>.</a><br><br>
 			<a>Highest height: </a><a id='highest'></a><a>.</a><br><br>
 		</div>
-		<div id='instruction'>
-			<br><a>Welcome to RaiseMeUp!</a>
-			<br><br><a>Here are some instructions for you to get started:</a>
-			<br><br><a><b>Objective:</b> </a>
-			<br><a>Place cubes onto the grid to build stairs that helps the "circular man" escape from the rising water.</a>
-			<br><br><a><b>Controls:</b></a>
-			<br><a>To place a cube - double click on the grid</a>
-			<br><a>To trigle AI - "=" </a>
-			<br><a>To make "circular man" move - keyboard "W", "A", "S", "D"</a>
-			<br><br><a><b>*Note:</b> Cubes are limited! Make sure you lead the "circular man" to earn cubes by reaching for reward coins! </a>
-			<br><br><button class='startGame'>Let's go!</button>
-		</div>
+
 	</body>
 </html>
