@@ -327,7 +327,7 @@ function canGoUp(cube, world, indexOffset, WaterOffset) {
 	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.y -= 1;
 
-	if(cube.y-1<bounds.minY){
+	if(cube.y-1<bounds.minY) {
 		nextCube.z = -2;
 		return nextCube;
 	}
@@ -517,6 +517,11 @@ exports.actions = function(req, res, ss) {
 			return res(thisRoom.blocks, first);
 		},
 
+		playerClose: function(player, channel) {
+			//TODO rm play in server room @ypei
+			ss.publish.channel(channel, 'playerOut', player);
+		},
+
 		clientMove: function(data, channel) {
 			thisRoom = roomMap[channel];
 
@@ -547,6 +552,9 @@ exports.actions = function(req, res, ss) {
 			if (!validPosition(position)) {
 				return res(false);
 			}
+			if (thisRoom.worldMapCheckType(position) == VOXEL_CELL) {
+				return res(false);
+			}
 
 			if (thisRoom.worldMapCheckType(position) == BONUS_CELL) {
 				var nextReward = new Object();
@@ -565,7 +573,7 @@ exports.actions = function(req, res, ss) {
 			}
 
 			thisRoom.worldMapSetType(thisRoom.botPosition, EMPTY_CELL)
-			thisRoom.botPssition = position;
+			thisRoom.botPosition = position;
 			thisRoom.worldMapSetType(position, BOT_CELL)
 			ss.publish.channel(channel, 'moveBot', position);
 		},
@@ -576,6 +584,8 @@ exports.actions = function(req, res, ss) {
 		syncWorld: function(player, channel) {
 			return res(roomMap[channel]);
 		},
+
+
 
 	};
 

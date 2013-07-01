@@ -33,13 +33,11 @@ var localPlayer, localRoom;
 var gridCellSize = 100;
 var gridCellNumber = 10;
 var gridHeight = 3000;
-var worldMap = new Array();
 var waterPosition = 0;
 var oldWaterPosition = 0;
 var oldWaterPostion = 0;
 var worldIndex = 0;
 
-var botPosition = new Object();
 var botGeo;
 var botMaterial;
 var bot;
@@ -128,11 +126,8 @@ $(document).ready(function() {
 
 
 
-
-
-
 function gameInit() {
-	setSocket();
+	connecttoGame();
 
 	ss.event.on('addBox', function(data, channelNumber) {
 		if (data[0] == 0) {
@@ -142,9 +137,9 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			if (getCellType(data[1]) == 0 && localRoom.blocks > 0) {
+			if (localRoom.worldMapCheckType(data[1]) == EMPTY_CELL && localRoom.blocks > 0) {
 				addVoxel( data[1], parseInt(data[2].color) );
-				setWorldMap(data[1], VOXEL_CELL);
+				localRoom.worldMapSetType(data[1], VOXEL_CELL);
 				localRoom.blocks = localRoom.blocks - 1;
 				if (window.innerWidth < 600) {
 					document.getElementById('blockNum-d').innerHTML = localRoom.blocks.toString()+'<br><br>';
@@ -183,20 +178,22 @@ function gameInit() {
 
 	ss.event.on('newPlayerIn', function(player, channelNumber) {
 		if (player.name != localPlayer.name) {
-			if (window.innerWidth > 600) {
-				document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+playerc.substring(2)+';">'+playern+'</a>';	
-			}
+			showPlayeronMenu(player);
 		}
 		localRoom.addPlayer(localPlayer.name, localPlayer.color);
 	});
 
+	ss.event.on('playerOut', function(player, channelNumber) {
+		removePlayeronMenu(player);
+	});
 
 	ss.event.on('moveBot', function(data, channelNumber) {
 		moveBot(data);
 	});
+
 }
 
-function setSocket() {
+function connecttoGame() {
 	ss.rpc('demo.connectGame', localPlayer, localRoom.roomNumber, localRoom.initTime, function(initBlocks, first) {
 		firstPlayer = first;
 		localRoom.blocks = initBlocks;
@@ -225,21 +222,8 @@ function gameboard_init() {
 	previousIndex.y = 0;
 	previousIndex.z = 0;
 	unCountedObjectArray = new Array();
-
-	for (var i = 0; i<gridCellNumber; i++) {
-		worldMap[i] = new Array();
-		for (var j = 0; j<gridCellNumber; j++){
-			worldMap[i][j] = new Array();
-			for (var k = 0; k<gridHeight; k++)
-				worldMap[i][j][k] = EMPTY_CELL;
-		}
-	}
-	botPosition.x = 0;
-	botPosition.y = 0;
-	botPosition.z = 0;
-	worldMap[botPosition.x][botPosition.y][botPosition.z] = BOT_CELL;
 	if (firstPlayer == true) {
-		requireReward(5, botPosition);
+		requireReward(5, localRoom.botPosition);
 	} else {
 		ss.rpc('demo.syncWorld', localPlayer, localRoom.roomNumber, function(worldData){
 			localRoom.players = worldData.players;
@@ -276,8 +260,8 @@ function gameboard_init() {
 			}
 
 			for ( var m in localRoom.players) {
-				if (window.innerWidth > 600 && localRoom.players[m] != localPlayer.name) {
-					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+localRoom.players[m].color.substring(2)+';">'+localRoom.players[m].name+'</a>';
+				if (localRoom.players[m].name != localPlayer.name) {
+					showPlayeronMenu(localRoom.players[m]);
 				}
 			}
 
@@ -311,7 +295,6 @@ function gameboard_init() {
 	rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
 	rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
 	scene.add( rollOverMesh );
-	console.log(this, rollOverMesh);
 
 	// cubes
 
@@ -321,9 +304,10 @@ function gameboard_init() {
 	//cubecolorfeed += playerName.charCodeAt(i).toString();
 	//}
 
-	//console.log(parseFloat(cubecolorfeed));
-	if (window.innerWidth > 600)
-		document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+localPlayer.color.substring(2)+';">'+localPlayer.name+'</a>';
+	showPlayeronMenu(localPlayer);
+	$(window).bind('beforeunload', function(){
+		ss.rpc('demo.playerClose', localPlayer, localRoom.roomNumber);
+	});
 
 	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(localPlayer.color), ambient: 0xffffff, shading: THREE.FlatShading } );
 
@@ -334,7 +318,7 @@ function gameboard_init() {
 	botMaterial = new THREE.MeshPhongMaterial( { color: 0xfe00b7, ambient: 0xffffff, shading: THREE.FlatShading } );
 	bot = new THREE.Mesh(botGeo, botMaterial);
 	bot.matrixAutoUpdate = false;
-	moveBot(botPosition);
+	moveBot(localRoom.botPosition);
 	scene.add(bot);
 
 	bonusGeo = new THREE.TorusGeometry( 25, 10, 20, 20 );
@@ -391,27 +375,27 @@ function gameboard_init() {
 
 	$(window).keypress(function(e){
 		var new_position = new Object();
-		new_position.x = botPosition.x;
-		new_position.y = botPosition.y;
-		new_position.z = botPosition.z - 1;
+		new_position.x = localRoom.botPosition.x;
+		new_position.y = localRoom.botPosition.y;
+		new_position.z = localRoom.botPosition.z - 1;
 		var next_position = new Object();
 		next_position.z = -2;
 		switch (e.which) {
 			case 115:
 				console.log('down');
-				next_position = canGoDown(new_position, worldMap, worldIndex, waterPosition);
+				next_position = canGoDown(new_position, localRoom.worldMap, worldIndex, waterPosition);
 				break;
 			case 119:
 				console.log('up');
-				next_position = canGoUp(new_position, worldMap, worldIndex,  waterPosition);
+				next_position = canGoUp(new_position, localRoom.worldMap, worldIndex,  waterPosition);
 				break;
 			case 97:
 				console.log('left');
-				next_position = canGoLeft(new_position, worldMap, worldIndex,  waterPosition);
+				next_position = canGoLeft(new_position, localRoom.worldMap, worldIndex,  waterPosition);
 				break;
 			case 100:
 				console.log('right');
-				next_position = canGoRight(new_position, worldMap, worldIndex,  waterPosition);
+				next_position = canGoRight(new_position, localRoom.worldMap, worldIndex,  waterPosition);
 				break;
 			default:
 		}
@@ -419,7 +403,6 @@ function gameboard_init() {
 			new_position.x = next_position.x;
 			new_position.y = next_position.y;
 			new_position.z = next_position.z+1;
-			console.log(new_position);
 			moveBotWrapper(new_position);
 		}
 	});
@@ -482,7 +465,19 @@ function gameOver() {
 		document.getElementById('highest').innerHTML = waterPosition;
 	}
 	});
-} 
+}
+
+function showPlayeronMenu(player) {
+	if (window.innerWidth > 600) {
+		$('#team').append('<br><a id="'+player.name+'"style="color: #'+player.color.substring(2)+';">'+player.name+'</a>');
+	}
+}
+
+function removePlayeronMenu(player) {
+	if (window.innerWidth > 600) {
+		$('#'+player.name).remove();
+	}
+}
 
 function onWindowResize() {
 	windowHalfX = window.innerWidth / 2;
@@ -553,7 +548,7 @@ function setVoxelPosition( intersector ) {
 	index.y = Math.floor( tmpPosition.z / gridCellSize ) + gridCellNumber / 2;
 	index.z = Math.floor( tmpPosition.y / gridCellSize );
 	
-	if (index.x == botPosition.x && index.y == botPosition.y && index.z == botPosition.z)
+	if (xyzMatch(index, localRoom.botPosition))
 		return;
 	if (index.x >= gridCellNumber || index.y >= gridCellNumber)
 		return;
@@ -743,8 +738,8 @@ function render() {
 	
 	theta = -targetRotation * 10;
 	// check if game overs
-	if (botPosition.z + 1 <= waterPosition && botPosition.z != gameOverPosition){
-		gameOverPosition = botPosition.z;
+	if (localRoom.botPosition.z + 1 <= waterPosition && localRoom.botPosition.z != gameOverPosition){
+		gameOverPosition = localRoom.botPosition.z;
 		gameOver();
 	}
 
@@ -829,11 +824,11 @@ function moveBot(position) {
 	bot.updateMatrix();
 	
 	//update world map
-	setWorldMap(botPosition, EMPTY_CELL);
-	botPosition.x = position.x;
-	botPosition.y = position.y;
-	botPosition.z = position.z;
-	setWorldMap(botPosition, BOT_CELL);
+	localRoom.worldMapCheckType(localRoom.botPosition, EMPTY_CELL);
+	localRoom.botPosition.x = position.x;
+	localRoom.botPosition.y = position.y;
+	localRoom.botPosition.z = position.z;
+	localRoom.worldMapCheckType(localRoom.botPosition, BOT_CELL);
 }
 
 
@@ -845,22 +840,23 @@ function waterFlow(waterPos) {
 		//else
 			//worldIndex = worldIndex + 1;
 		oldWaterPosition = waterPos;
+		for (var i = 0; i < rewardHash.length; i++) {
+				if (rewardHash[i] != undefined) {
+					if(rewardHash[i].index.z == waterPos) {
+						rewardHash[i] = undefined;
+						requireReward(1, localRoom.botPosition, localRoom.roomNumber);
+					}
+				}
+		}
 	}
-}
-
-function setWorldMap(position, type) {
-	var newZ = (position.z) % gridHeight + worldIndex;
-	worldMap[position.x][position.y][newZ] = type;
 }
 
 function checkReward(position) {
 
-	position.z = (position.z) % gridHeight + worldIndex;
-	if (getCellType(position) == BONUS_CELL) {
-		var i = 0
-		for (i = 0; i < rewardHash.length; i++) {
+	if (localRoom.worldMapCheckType(position) == BONUS_CELL) {
+		for ( var i = 0; i < rewardHash.length; i++) {
 				if (rewardHash[i] != undefined) {
-					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == position.z) {
+					if(xyzMatch(rewardHash[i].index, position)) {
 						scene.remove(rewardHash[i]);
 						rewardHash[i] = undefined;
 					}
@@ -869,18 +865,6 @@ function checkReward(position) {
 	}
 }
 
-function WorldztoAbsoz(wz) {
-	if (wz >= worldIndex) {
-		return (wz - worldIndex + waterPosition);
-	} else {
-		return (waterPosition + gridHeight - (worldIndex - wz));
-	}
-}
-
-function getCellType(position) {
-	var newZ = (position.z) % gridHeight + worldIndex;
-	return worldMap[position.x][position.y][newZ];
-}
 
 function addBonus( position ) {
 	if (position.x < 0 || position.x >= gridCellNumber)
@@ -890,7 +874,7 @@ function addBonus( position ) {
 	if (position.z < 0)
 		return;
 
-	setWorldMap(position, BONUS_CELL);
+	localRoom.worldMapSetType(position, BONUS_CELL);
 	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );
 	var gridSize = gridCellSize * gridCellNumber;
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
@@ -955,10 +939,6 @@ function canGoRight(cube, world, indexOffset, WaterOffset) {
 	var down1Zindex = (nextCube.z - 1)%gridHeight;
 	nextCube.x += 1;
 
-	console.log('***:');
-	console.log(nextCube);
-	console.log('////:');
-	console.log(cube);
 	if(cube.x+1>bounds.maxX){
 		nextCube.z = -2;
 		return nextCube;
@@ -969,24 +949,12 @@ function canGoRight(cube, world, indexOffset, WaterOffset) {
 		return nextCube;
 	}
 
-	console.log(world[cube.x+1][cube.y][nextCube.z]);
-	console.log(world[cube.x+1][cube.y][down1Zindex]);
-	console.log(world[cube.x+1][cube.y][up1Zindex]);
-	console.log(nextCube);
-	console.log(WaterOffset);
-
-
 	if(cube.z>-1&&world[cube.x+1][cube.y][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x+1][cube.y][down1Zindex]>=1)&&world[cube.x+1][cube.y][up1Zindex]<=0){
 
 		nextCube.z = down1Zindex;
 		return nextCube;
 	}
 
-	console.log(world[cube.x+1][cube.y][up1Zindex]);
-	console.log(world[cube.x+1][cube.y][up2Zindex]);
-	console.log(up2Zindex);
-	console.log(indexOffset);
-	console.log(nextCube);
 	if(world[cube.x+1][cube.y][up1Zindex]>=1&&world[cube.x+1][cube.y][up2Zindex]<=0){
 		nextCube.z = up1Zindex;
 		return nextCube;
@@ -1050,20 +1018,17 @@ function canGoDown(cube, world, indexOffset, WaterOffset) {
 	nextCube.y += 1;
 
 	if(cube.y+1 > bounds.maxY){
-		console.log(1);
 		nextCube.z = -2;
 		return nextCube;
 	}
 
 	if((cube.z == -1||world[cube.x][cube.y+1][nextCube.z]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
 
-		console.log(2);
 		return nextCube;
 	}
 
 	if(cube.z>-1&&world[cube.x][cube.y+1][nextCube.z]<=0&&((nextCube.z==0)||world[cube.x][cube.y+1][down1Zindex]>=1)&&world[cube.x][cube.y+1][up1Zindex]<=0){
 
-		console.log(3);
 		nextCube.z  = down1Zindex;
 		return nextCube;
 	}
