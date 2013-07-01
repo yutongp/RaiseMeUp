@@ -21,6 +21,8 @@ var BOT_CELL = -1;
 var BONUS_CELL = -2;
 var INITBLOCKS = 50;
 
+var highestReward;
+
 var roomMap = {}
 
 function Player(name, color) {
@@ -445,6 +447,7 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 		temp.z = newZ;
 		rewardCubes[i] = temp;
 	}
+	highestReward = rewardCubes[numOfReward - 1];
 	return rewardCubes;
 }
 
@@ -564,7 +567,7 @@ exports.actions = function(req, res, ss) {
 				//FIXME
 				thisRoom.blocks += Math.floor(getReward(thisRoom.blocks, position,nextReward,2)) + 1;
 				do {
-					var data = getRewardCubePosition(1, position);
+					var data = getRewardCubePosition(1, highestReward);
 				} while (thisRoom.worldMapCheckType(data[0]) == BONUS_CELL);
 				thisRoom.worldMapSetType(data[0], BONUS_CELL);
 
@@ -575,7 +578,7 @@ exports.actions = function(req, res, ss) {
 			thisRoom.worldMapSetType(thisRoom.botPosition, EMPTY_CELL)
 			thisRoom.botPosition = position;
 			thisRoom.worldMapSetType(position, BOT_CELL)
-			ss.publish.channel(channel, 'moveBot', position);
+			ss.publish.channel(channel, 'moveBot', position, highestReward);
 		},
 
 		getRewardNum: function(currentReward, nextReward, channel) {
