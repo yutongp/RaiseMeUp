@@ -1,7 +1,7 @@
 // Server-side Code
 var rewardCubeHeightRange = 9;
 var rewardCubeDistanceRange = 9;
-var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
+var bounds = {maxX: 9, maxY: 9, minX:0, minY:0};
 var heightDeltaRange = 6;
 var MaxReward = 5;
 var visited  = 1000
