@@ -4,7 +4,7 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED =  50 / 7200;
+var SPEED =  0.00001*50 / 7200;
 
 var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
@@ -509,28 +509,28 @@ var getPath2 = function(world,startCube,targetCube){
            
             
 			var nextCube1 = canGoLeft(cube,world, worldIndex, waterPosition);
-			if(nextCube1.z!=-2&&!(world[nextCube1.x][nextCube1.y][nextCube1.z]>visited)&&nextCube1.z>waterPosition){
+			if(nextCube1.z!=-2&&!(world[nextCube1.x][nextCube1.y][nextCube1.z]>visited)){
 				world[nextCube1.x][nextCube1.y][nextCube1.z] = fromRight;
 				queue.push(nextCube1);
                 console.log("push1: ",nextCube1);
 			}
             //console.log("cube1: ",nextCube1);
             
-			var nextCube2 = canGoRight(cube,world, worldIndex, waterPosition&&nextCube2.z>waterPosition);
+			var nextCube2 = canGoRight(cube,world, worldIndex, waterPosition);
 			if(nextCube2.z!=-2&&!(world[nextCube2.x][nextCube2.y][nextCube2.z]>visited)){
 				world[nextCube2.x][nextCube2.y][nextCube2.z] = fromLeft;
 				queue.push(nextCube2);
                 console.log("push2: ",nextCube2);
 			}
             //console.log("cube2: ",nextCube2);
-			var nextCube3 = canGoUp(cube,world, worldIndex, waterPosition&&nextCube3.z>waterPosition);
+			var nextCube3 = canGoUp(cube,world, worldIndex, waterPosition);
 			if(nextCube3.z!=-2&&!(world[nextCube3.x][nextCube3.y][nextCube3.z]>visited)){
 				world[nextCube3.x][nextCube3.y][nextCube3.z] = fromBot;
 				queue.push(nextCube3);
                 console.log("push3: ",nextCube3);
 			}
             //console.log("cube3: ",nextCube3);
-			var nextCube4 = canGoDown(cube,world, worldIndex, waterPosition&&nextCube4.z>waterPosition);
+			var nextCube4 = canGoDown(cube,world, worldIndex, waterPosition);
 			if(nextCube4.z!=-2&&!(world[nextCube4.x][nextCube4.y][nextCube4.z]>visited)){
 				world[nextCube4.x][nextCube4.y][nextCube4.z] = fromUp;
 				queue.push(nextCube4);
