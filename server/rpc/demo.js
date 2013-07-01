@@ -532,7 +532,7 @@ exports.actions = function(req, res, ss) {
 				return res(false);
 			}
 
-			if (thisRoom.worldMapCheckType(data[1]) != VOXEL_CELL) {
+			if (thisRoom.worldMapCheckType(data[1]) == EMPTY_CELL) {
 				thisRoom.blocks--;
 				thisRoom.worldMapSetType(data[1], VOXEL_CELL);
 				ss.publish.channel(channel, 'addBox', data);

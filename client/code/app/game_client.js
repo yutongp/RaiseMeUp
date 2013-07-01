@@ -13,8 +13,7 @@ var firstPlayer = false;
 var localPlayer, localRoom;
 var aiStat = false;
 
-var bg_sound;
-var build_block_sound;
+var bckgrd_bgm, build_block_bgm, player_move_bgm, coin_bgm;
 
 var container, stats;
 var camera, scene, renderer;
@@ -128,12 +127,36 @@ function Room (roomn, itime) {
 
 $(document).ready(function() {
 	showInstruction();
-	//bg.sound = new Howl({
-	//urls: ['https://s3.amazonaws.com/Seattle-Pong/drum.ogg']
-	//}).play();
-	build_block_sound = new Howl({
-		urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg']
+
+	bckgrd_bgm = new Howl({
+		urls: ['https://s3.amazonaws.com/Seattle-Pong/bckgrd_music.wav'],
+				 autoplay: true,
+				 loop: true,
 	});
+
+	build_block_bgm = new Howl({
+		urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg'],
+					  autoplay: false,
+					  loop: false,
+	});
+
+
+	player_move_bgm = new Howl({
+		urls: ['https://s3.amazonaws.com/Seattle-Pong/move.WAV'],
+				autoplay: false,
+				loop: false,
+				volume: 0.3
+	});
+
+
+	coin_bgm = new Howl({
+		urls: ['https://s3.amazonaws.com/Seattle-Pong/coin.WAV'],
+		 autoplay: false,
+		 loop: false,
+		 volume: 0.9
+	});
+
+	bckgrd_bgm.fade(0, 1, 12000);
 });
 
 
@@ -223,9 +246,11 @@ function requireReward(numReward, lastReward) {
 function countScore(){
 	if (Date.now() - localRoom.initTime > 2000) {
 		score = score + 77;
-		if (window.innerWidth < 600)
+		if (window.innerWidth < 600) {
 			document.getElementById('scoreboard-d').innerHTML = score.toString();
-		else document.getElementById('scoreboard').innerHTML = score.toString();
+		} else {
+			document.getElementById('scoreboard').innerHTML = score.toString();
+		}
 	}
 }
 
@@ -292,8 +317,21 @@ function gameboard_init() {
 	}
 	else {
 		info.id = 'info';
-		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+		//info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br><input type="button" id = "mute_bckgrd_music" onlick="x,." value="Mute"/><br><input type="button" id = "unmute_bckgrd_music" onlick="x,." value="Unmute"/>';
 		container.appendChild(info);
+		$("#mute_bckgrd_music").click(
+			function(){
+
+				bckgrd_bgm.pause();
+			}		
+		);
+		$("#unmute_bckgrd_music").click(
+			function(){
+				bckgrd_bgm.play();
+			}		
+		);
+
 	}
 
 	clock=self.setInterval(function(){countScore()},100);
@@ -725,7 +763,10 @@ function aiMoveHelper(path,count){
 function moveBotWrapper(new_position) {
 	new_position.z = (new_position.z) % gridHeight + worldIndex;
 	ss.rpc("demo.botMove", new_position, localRoom.roomNumber);
+	player_move_bgm.play();
 }
+
+
 function showInstruction() {
 	$('#instruction').lightbox_me({
 		centered: true,
@@ -1100,7 +1141,7 @@ function addVoxel(position, materialColor) {
 		return;
 	if (position.y < 0 || position.y >= gridCellNumber)
 		return;
-	if (position.z < 0) 
+	if (position.z < 0)
 		return;
 
 	//stop ai move #AI
@@ -1121,7 +1162,7 @@ function addVoxel(position, materialColor) {
 	scene.add( voxel );
 
 
-	build_block_sound.play();
+	build_block_bgm.play();
 }
 
 function moveBot(position) {
@@ -1193,6 +1234,7 @@ function checkReward(position) {
 				}
 			}
 		}
+		coin_bgm.play();//play eat coin sound
 	}
 }
 
