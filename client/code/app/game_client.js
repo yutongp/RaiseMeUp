@@ -2,12 +2,13 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
-var PLAYER_CELL = -1;
+var BOT_CELL = -1;
 var BONUS_CELL = -2;
 var SPEED = 30 / 7200;
+var INITIAL_CAMERA_HEIGHT = 800;
+var INITBLOCKS = 50;
 
 var firstPlayer = false;
-var INITIAL_CAMERA_HEIGHT = 800;
 
 
 var bg_sound;
@@ -25,8 +26,9 @@ var rollOverMesh, rollOverMaterial;
 var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
 var cubeGeo, cubeMaterial;
 var i, intersector;
-var playerName, roomNumber, blocksLeft;
-var cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+
+//var playerName, roomNumber, blocksLeft;
+var localPlayer, localRoom;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
@@ -37,16 +39,15 @@ var oldWaterPosition = 0;
 var oldWaterPostion = 0;
 var worldIndex = 0;
 
-var playerPosition = new Object();
-var playerGeo;
-var playerMaterial;
-var player;
+var botPosition = new Object();
+var botGeo;
+var botMaterial;
+var bot;
 
 var bonusGeo;
 var bonusMaterial;
 var bounds = {maxX: 9, maxY: 9, minX:0, minY:0};
 
-var initialTime;
 var startTime = 0;
 var clock;
 var score = 0;
@@ -65,6 +66,55 @@ var targetRotationOnMouseDown = 0;
 var targetRotation = 0;
 var mouseDown = false;
 
+function Player(name, color) {
+	this.name = name;
+	this.color = color;
+}
+
+function Room (roomn, itime) {
+	this.players = {};
+	this.blocks = INITBLOCKS;
+	this.roomNumber = roomn;
+	this.botPosition = {x:0, y:0, z: 0};
+	this.initTime = itime;
+
+	this.worldMap = new Array();
+	for (var i = 0; i<gridCellNumber; i++) {
+		this.worldMap[i] = new Array();
+		for (var j = 0; j<gridCellNumber; j++){
+			this.worldMap[i][j] = new Array();
+			for (var k = 0; k<gridHeight; k++)
+				this.worldMap[i][j][k] = EMPTY_CELL;
+		}
+	}
+
+	this.addPlayer = function (name, color) {
+		if (this.players[name] == undefined) {
+			this.players[name] = new Player(name, color);
+		} else {
+			name += "1";
+			this.players[name] = new Player(name, color);
+		}
+	}
+
+	this.rmPlayer = function () {
+		if (this.players[name] != undefined) {
+			this.players[name] = undefined;
+		}
+	}
+
+	this.worldMapSetType = function(position, type) {
+		this.worldMap[position.x][position.y][position.z] = type;
+	}
+
+	this.worldMapCheckType = function(position) {
+		return this.worldMap[position.x][position.y][position.z];
+	}
+
+	this.botPositionUpdate = function(position) {
+		this.botPosition = position
+	}
+}
 
 $(document).ready(function() {
 	showInstruction();
@@ -92,14 +142,14 @@ function gameInit() {
 			}
 		}
 		if (data[0] == 1) {
-			if (getCellType(data[1]) == 0 && blocksLeft > 0) {
-				addVoxel( data[1], parseInt(data[2]) );
+			if (getCellType(data[1]) == 0 && localRoom.blocks > 0) {
+				addVoxel( data[1], parseInt(data[2].color) );
 				setWorldMap(data[1], VOXEL_CELL);
-				blocksLeft = blocksLeft - 1;
+				localRoom.blocks = localRoom.blocks - 1;
 				if (window.innerWidth < 600) {
-					document.getElementById('blockNum-d').innerHTML = blocksLeft.toString()+'<br><br>';
+					document.getElementById('blockNum-d').innerHTML = localRoom.blocks.toString()+'<br><br>';
 				} else {
-					document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+					document.getElementById('blockNum').innerHTML = localRoom.blocks.toString()+'<br><br>';
 				}
 			}
 		}
@@ -123,33 +173,33 @@ function gameInit() {
 	});
 
 	ss.event.on('addblocksLeftNum', function(data, channelNumber) {
-		blocksLeft = data;
+		localRoom.blocks = data;
 		if (window.innerWidth < 600) {
-			document.getElementById('blockNum-d').innerHTML = blocksLeft.toString()+'<br><br>';
+			document.getElementById('blockNum-d').innerHTML = localRoom.blocks.toString()+'<br><br>';
 		} else {
-			document.getElementById('blockNum').innerHTML = blocksLeft.toString()+'<br><br>';
+			document.getElementById('blockNum').innerHTML = localRoom.blocks.toString()+'<br><br>';
 		}
 	});
 
-	ss.event.on('newPlayerIn', function(playern, playerc, channelNumber) {
-		if (playern != playerName) {
+	ss.event.on('newPlayerIn', function(player, channelNumber) {
+		if (player.name != localPlayer.name) {
 			if (window.innerWidth > 600) {
 				document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+playerc.substring(2)+';">'+playern+'</a>';	
 			}
 		}
+		localRoom.addPlayer(localPlayer.name, localPlayer.color);
 	});
 
 
 	ss.event.on('moveBot', function(data, channelNumber) {
-		movePlayer(data);
+		moveBot(data);
 	});
 }
 
 function setSocket() {
-	initialTime = Date.now();
-	ss.rpc('demo.connectGame', playerName, cubecolor, roomNumber,initialTime, function(initData, first) {
+	ss.rpc('demo.connectGame', localPlayer, localRoom.roomNumber, localRoom.initTime, function(initBlocks, first) {
 		firstPlayer = first;
-		blocksLeft = initData;
+		localRoom.blocks = initBlocks;
 		gameboard_init();
 		animate();
 	});
@@ -157,14 +207,14 @@ function setSocket() {
 
 
 function requireReward(numReward, lastReward) {
-	ss.rpc('demo.requireReward', numReward, lastReward, roomNumber);
+	ss.rpc('demo.requireReward', numReward, lastReward, localRoom.roomNumber);
 }
 
 function countScore(){
-	if (Date.now() - initialTime > 2000) {
+	if (Date.now() - localRoom.initTime > 2000) {
 		score = score + 77;
 		if (window.innerWidth < 600)
-			document.getElementById('scoreboard-d').innerHTML = score.toString();	
+			document.getElementById('scoreboard-d').innerHTML = score.toString();
 		else document.getElementById('scoreboard').innerHTML = score.toString();
 	}
 }
@@ -184,39 +234,33 @@ function gameboard_init() {
 				worldMap[i][j][k] = EMPTY_CELL;
 		}
 	}
-	playerPosition.x = 0;
-	playerPosition.y = 0;
-	playerPosition.z = 0;
-	worldMap[playerPosition.x][playerPosition.y][playerPosition.z] = PLAYER_CELL;
+	botPosition.x = 0;
+	botPosition.y = 0;
+	botPosition.z = 0;
+	worldMap[botPosition.x][botPosition.y][botPosition.z] = BOT_CELL;
 	if (firstPlayer == true) {
-		requireReward(5, playerPosition);
+		requireReward(5, botPosition);
 	} else {
-		ss.rpc('demo.syncWorld', playerName, cubecolor, roomNumber, function(worldData){
-			initialTime = worldData.initTime;
-			console.log(initialTime);
-			for (var i = 0; i<gridCellNumber; i++) {
-				for (var j = 0; j<gridCellNumber; j++){
-					for (var k = 0; k<gridHeight; k++) {
-						worldMap[i][j][k] = worldData.worldMap[i][j][k];
-						if (worldData.worldMap[i][j][k] == VOXEL_CELL) {
-							var n = new Object();
-							n.x = i;
-							n.y = j;
-							n.z = k;
+		ss.rpc('demo.syncWorld', localPlayer, localRoom.roomNumber, function(worldData){
+			localRoom.players = worldData.players;
+			localRoom.blocks = worldData.blocks;
+			localRoom.botPosition = worldData.botPosition;
+			localRoom.initTime = worldData.initTime;
+			localRoom.worldMap = worldData.worldMap;
+			var n = new Object();
+			for (var i = 0; i < gridCellNumber; i++) {
+				for (var j = 0; j < gridCellNumber; j++){
+					for (var k = 0; k < gridHeight; k++) {
+						n.x = i;
+						n.y = j;
+						n.z = k;
+						if (localRoom.worldMapCheckType(n) == VOXEL_CELL) {
 							addVoxel(n);
-						} else if (worldData.worldMap[i][j][k] == PLAYER_CELL) {
-							var n = new Object();
-							n.x = i;
-							n.y = j;
-							n.z = k;
-							movePlayer(n);
-						} else if (worldData.worldMap[i][j][k] == BONUS_CELL) {
-							var n = new Object();
-							n.x = i;
-							n.y = j;
-							n.z = k;
+						} else if (localRoom.worldMapCheckType(n) == BOT_CELL) {
+							moveBot(n);
+						} else if (localRoom.worldMapCheckType(n) == BONUS_CELL) {
 							var rewardin = false;
-							for (var r =0; r < rewardHash.length; r++) {
+							for (var r = 0; r < rewardHash.length; r++) {
 								if (rewardHash[r] == undefined) {
 									rewardHash[r] = addBonus(n);
 									rewardin = true;
@@ -230,10 +274,10 @@ function gameboard_init() {
 					}
 				}
 			}
-			for ( var m = 0;  m < worldData.players.length; m++) {
 
-				if (window.innerWidth > 600 && worldData.players[m] != playerName) {
-					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+worldData.playercolors[m].substring(2)+';">'+worldData.players[m]+'</a>';	
+			for ( var m in localRoom.players) {
+				if (window.innerWidth > 600 && localRoom.players[m] != localPlayer.name) {
+					document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+localRoom.players[m].color.substring(2)+';">'+localRoom.players[m].name+'</a>';
 				}
 			}
 
@@ -246,12 +290,12 @@ function gameboard_init() {
 	var info = document.createElement('div');
 	if (window.innerWidth < 600) { //Detect devices
 		info.id = 'info-d';
-		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+blocksLeft+'</a></div><br>';
-                container.appendChild(info);
+		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
+		container.appendChild(info);
 	}
 	else {
 		info.id = 'info';
-		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
 		container.appendChild(info);
 	}
 
@@ -279,19 +323,19 @@ function gameboard_init() {
 
 	//console.log(parseFloat(cubecolorfeed));
 	if (window.innerWidth > 600)
-		document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+cubecolor.substring(2)+';">'+playerName+'</a>';	
+		document.getElementById('team').innerHTML = $('#team').html()+'<br><a style="color: #'+localPlayer.color.substring(2)+';">'+localPlayer.name+'</a>';
 
-	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(cubecolor), ambient: 0xffffff, shading: THREE.FlatShading } );
+	cubeMaterial = new THREE.MeshLambertMaterial( { color: parseInt(localPlayer.color), ambient: 0xffffff, shading: THREE.FlatShading } );
 
 	//cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c, ambient: 0x00ff80, shading: THREE.FlatShading, map: THREE.ImageUtils.loadTexture( "http://threejs.org/examples/textures/square-outline-textured.png" ) } );
 
 
-	playerGeo = new THREE.SphereGeometry(50,50,30);
-	playerMaterial = new THREE.MeshPhongMaterial( { color: 0xfe00b7, ambient: 0xffffff, shading: THREE.FlatShading } );
-	player = new THREE.Mesh(playerGeo, playerMaterial);
-	player.matrixAutoUpdate = false;
-	movePlayer(playerPosition);
-	scene.add(player);
+	botGeo = new THREE.SphereGeometry(50,50,30);
+	botMaterial = new THREE.MeshPhongMaterial( { color: 0xfe00b7, ambient: 0xffffff, shading: THREE.FlatShading } );
+	bot = new THREE.Mesh(botGeo, botMaterial);
+	bot.matrixAutoUpdate = false;
+	moveBot(botPosition);
+	scene.add(bot);
 
 	bonusGeo = new THREE.TorusGeometry( 25, 10, 20, 20 );
 	bonusMaterial = new THREE.MeshPhongMaterial( { color: 0xffff00, ambient: 0x555555, specular: 0xffffff, metal: true } );
@@ -347,9 +391,9 @@ function gameboard_init() {
 
 	$(window).keypress(function(e){
 		var new_position = new Object();
-		new_position.x = playerPosition.x;
-		new_position.y = playerPosition.y;
-		new_position.z = playerPosition.z - 1;
+		new_position.x = botPosition.x;
+		new_position.y = botPosition.y;
+		new_position.z = botPosition.z - 1;
 		var next_position = new Object();
 		next_position.z = -2;
 		switch (e.which) {
@@ -376,7 +420,7 @@ function gameboard_init() {
 			new_position.y = next_position.y;
 			new_position.z = next_position.z+1;
 			console.log(new_position);
-			movePlayerWrapper(new_position);
+			moveBotWrapper(new_position);
 		}
 	});
 
@@ -384,9 +428,9 @@ function gameboard_init() {
 }
 
 
-function movePlayerWrapper(new_position) {
+function moveBotWrapper(new_position) {
 	new_position.z = (new_position.z) % gridHeight + worldIndex;
-	ss.rpc("demo.botMove", new_position, roomNumber);
+	ss.rpc("demo.botMove", new_position, localRoom.roomNumber);
 }
 function showInstruction() {
 	$('#instruction').lightbox_me({
@@ -410,13 +454,17 @@ function signIn() {
 		$('#sign_up').find('input:first').focus()
 	},
 	onClose: function() {
-		playerName = $('input[name="player_name"]').val();
-		roomNumber = $('input[name="room_number"]').val();
+		var playerName = $('input[name="player_name"]').val();
+		var roomNumber = $('input[name="room_number"]').val();
+		var cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+		var initialTime = Date.now();
 		if (playerName == '' || roomNumber == '') {
 			$('#emptyInput').attr('style','visibility: visible;');
 			signIn();
 		}
 		else {
+			localPlayer = new Player(playerName, cubecolor);
+			localRoom = new Room(roomNumber, initialTime);
 			gameInit();
 		}
 	},
@@ -454,7 +502,7 @@ function getRealIntersector( intersects ) {
 		intersector = intersects[ i ];
 		if (intersector.object == movingPlane)
 			continue;
-		if (intersector.object == player)
+		if (intersector.object == bot)
 			continue;
 		if (intersector.object == rollOverMesh)
 			continue;
@@ -505,7 +553,7 @@ function setVoxelPosition( intersector ) {
 	index.y = Math.floor( tmpPosition.z / gridCellSize ) + gridCellNumber / 2;
 	index.z = Math.floor( tmpPosition.y / gridCellSize );
 	
-	if (index.x == playerPosition.x && index.y == playerPosition.y && index.z == playerPosition.z)
+	if (index.x == botPosition.x && index.y == botPosition.y && index.z == botPosition.z)
 		return;
 	if (index.x >= gridCellNumber || index.y >= gridCellNumber)
 		return;
@@ -556,6 +604,11 @@ function onDocumentMouseMove( event ) {
 	}
 }
 
+
+function xyzMatch(cube1, cube2){
+	return ((cube1.x == cube2.x) && (cube1.y == cube2.y) && (cube1.z == cube2.z));
+}
+
 function onDocumentMouseDown( event ) {
 
 	event.preventDefault();
@@ -576,28 +629,19 @@ function onDocumentMouseDown( event ) {
 			return;
 
 		if ( isCtrlDown ) {
-			//if ( intersector.object != plane ) {
-			//scene.remove( intersector.object );
-			//}
 
 			// delete cube
-			ss.rpc('demo.clientMove', [0, intersector.object], roomNumber);
+			ss.rpc('demo.clientMove', [0, intersector.object], localRoom.roomNumber);
 		} else {
 			// create cube
 			normalMatrix.getNormalMatrix( intersector.object.matrixWorld );
 
 			tmpVec.copy( intersector.face.normal );
 			tmpVec.applyMatrix3( normalMatrix ).normalize();
-
-			// Convert into matrix index and call addVoxel function to add
-			/*var index = new Object();
-			index.x = Math.floor( voxelPosition.x / gridCellSize ) + gridCellNumber / 2;
-			index.y = Math.floor( voxelPosition.z / gridCellSize ) + gridCellNumber / 2;
-			index.z = Math.floor( voxelPosition.y / gridCellSize );*/
-			if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
+			if (xyzMatch(rollOverMesh.index, previousIndex)) {
 				previousIndex = rollOverMesh.index;
-				ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
-			} else{
+				ss.rpc('demo.clientMove', [1, rollOverMesh.index, localPlayer], localRoom.roomNumber);
+			} else {
 				previousIndex = rollOverMesh.index;
 			}
 		}
@@ -693,14 +737,14 @@ function render() {
 
 	}*/
 
-	var currentWaterHeight = (Date.now() - initialTime ) * SPEED;
+	var currentWaterHeight = (Date.now() - localRoom.initTime ) * SPEED;
 	waterPosition = Math.floor(currentWaterHeight / gridCellSize);
 	waterFlow(waterPosition);
 	
 	theta = -targetRotation * 10;
 	// check if game overs
-	if (playerPosition.z + 1 <= waterPosition && playerPosition.z != gameOverPosition){
-		gameOverPosition = playerPosition.z;
+	if (botPosition.z + 1 <= waterPosition && botPosition.z != gameOverPosition){
+		gameOverPosition = botPosition.z;
 		gameOver();
 	}
 
@@ -758,7 +802,7 @@ function addVoxel(position, materialColor) {
 	build_block_sound.play();
 }
 
-function movePlayer(position) {
+function moveBot(position) {
 	//if (position.x < 0 || position.x >= gridCellNumber)
 		//return;
 	//if (position.y < 0 || position.y >= gridCellNumber)
@@ -781,15 +825,15 @@ function movePlayer(position) {
 	var xCoordinate = position.x * gridCellSize + gridCellSize / 2 - gridSize / 2;
 	var yCoordinate = position.z * gridCellSize + gridCellSize / 2;
 	var zCoordinate = position.y * gridCellSize + gridCellSize / 2 - gridSize / 2;
-	player.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
-	player.updateMatrix();
+	bot.position.copy( new THREE.Vector3(xCoordinate,yCoordinate,zCoordinate) );
+	bot.updateMatrix();
 	
 	//update world map
-	setWorldMap(playerPosition, EMPTY_CELL);
-	playerPosition.x = position.x;
-	playerPosition.y = position.y;
-	playerPosition.z = position.z;
-	setWorldMap(playerPosition, PLAYER_CELL);
+	setWorldMap(botPosition, EMPTY_CELL);
+	botPosition.x = position.x;
+	botPosition.y = position.y;
+	botPosition.z = position.z;
+	setWorldMap(botPosition, BOT_CELL);
 }
 
 
@@ -815,7 +859,6 @@ function checkReward(position) {
 	if (getCellType(position) == BONUS_CELL) {
 		var i = 0
 		for (i = 0; i < rewardHash.length; i++) {
-				console.log("sadasdadsadas,");
 				if (rewardHash[i] != undefined) {
 					if(rewardHash[i].index.x == position.x && rewardHash[i].index.y == position.y && rewardHash[i].index.z == position.z) {
 						scene.remove(rewardHash[i]);
@@ -840,12 +883,12 @@ function getCellType(position) {
 }
 
 function addBonus( position ) {
-	//if (position.x < 0 || position.x >= gridCellNumber)
-		//return;
-	//if (position.y < 0 || position.y >= gridCellNumber)
-		//return;
-	//if (position.z < 0)
-		//return;
+	if (position.x < 0 || position.x >= gridCellNumber)
+		return;
+	if (position.y < 0 || position.y >= gridCellNumber)
+		return;
+	if (position.z < 0)
+		return;
 
 	setWorldMap(position, BONUS_CELL);
 	var bonus = new THREE.Mesh( bonusGeo, bonusMaterial );

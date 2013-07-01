@@ -17,20 +17,24 @@ var gridHeight = 3000;
 var gridCellNumber = 10;
 var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
-var PLAYER_CELL = -1;
+var BOT_CELL = -1;
 var BONUS_CELL = -2;
+var INITBLOCKS = 50;
 
 var roomMap = {}
 
+function Player(name, color) {
+	this.name = name;
+	this.color = color;
+}
+
 function Room (roomn, itime) {
-	this.players = new Array();
-	this.playercolors = new Array();
-	this.blocks = 50;
+	this.players = {};
+	this.blocks = INITBLOCKS;
 	this.roomNumber = roomn;
 	this.botPosition = {x:0, y:0, z: 0};
-	this.waterPosition = 0;
 	this.initTime = itime;
-	this.waterIndex = 0;
+
 	this.worldMap = new Array();
 	for (var i = 0; i<gridCellNumber; i++) {
 		this.worldMap[i] = new Array();
@@ -40,10 +44,43 @@ function Room (roomn, itime) {
 				this.worldMap[i][j][k] = EMPTY_CELL;
 		}
 	}
+
+	this.addPlayer = function (name, color) {
+		if (this.players[name] == undefined) {
+			this.players[name] = new Player(name, color);
+		} else {
+			name += "1";
+			this.players[name] = new Player(name, color);
+		}
+	}
+
+	this.rmPlayer = function () {
+		if (this.players[name] != undefined) {
+			this.players[name] = undefined;
+		}
+	}
+
+	this.worldMapSetType = function(position, type) {
+		this.worldMap[position.x][position.y][position.z] = type;
+	}
+
+	this.worldMapCheckType = function(position) {
+		return this.worldMap[position.x][position.y][position.z];
+	}
+
+	this.botPositionUpdate = function(position) {
+		this.botPosition = position
+	}
 }
 
 
-
+function validPosition(position) {
+	if ((bounds.minX <= position.x <= bounds.maxX) && (bounds.minY <= position.y <= bounds.maxY)) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 var getPath = function(world,startCube,targetCube){
 	//0 >; 1 ^ ; 2 < ; v
@@ -51,8 +88,6 @@ var getPath = function(world,startCube,targetCube){
 	queue = [];
 	queue.push(startCube);
 	world[startCube.x][startCube.y][startCube.z] = fromNothing;
-
-
 
 	while(queue.length!=0){
 		var cube = queue.shift();
@@ -112,11 +147,7 @@ var getPath = function(world,startCube,targetCube){
 	}
 
 	return path;
-
-
 }
-
-
 
 
 var getPath2 = function(world,startCube,targetCube){
@@ -127,7 +158,6 @@ var getPath2 = function(world,startCube,targetCube){
 
 	var cloestCube = startCube;
 	var minDist = 9999;
-
 
 	while(queue.length!=0){
 		var cube = queue.shift();
@@ -368,8 +398,8 @@ function canGoDown(cube, world, indexOffset, WaterOffset) {
 
 
 
-function xyzMatch(cube1,cube2){
-	return (cube1.x==cube2.x)&&(cube1.y==cube2.y)&&(cube1.z==cube2.z);
+function xyzMatch(cube1, cube2){
+	return (cube1.x == cube2.x) && (cube1.y == cube2.y) && (cube1.z == cube2.z);
 }
 
 var getReward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
@@ -472,74 +502,80 @@ exports.actions = function(req, res, ss) {
 	//this function will calculate how many new blocks the user get.
 	return {
 
-		sendMessage: function(message) {
-			if (message && message.length > 0) {         // Check for blank messages
-				ss.publish.all('newMessage', message);     // Broadcast the message to everyone
-				return res(true);                          // Confirm it was sent to the originating client
+		connectGame: function(player, roomNumber, initialTime) {
+			var first = false;
+			if (roomMap[roomNumber] == undefined) {
+				roomMap[roomNumber] = new Room(roomNumber, initialTime);
+				first = true;
+			}
+
+			thisRoom = roomMap[roomNumber];
+			thisRoom.addPlayer(player.name, player.color);
+			req.session.channel.subscribe(roomNumber);
+			req.session.setUserId(player.name);
+			ss.publish.channel(roomNumber, 'newPlayerIn', player);
+			return res(thisRoom.blocks, first);
+		},
+
+		clientMove: function(data, channel) {
+			thisRoom = roomMap[channel];
+
+			if (!validPosition(data[1])) {
+				return res(false);
+			}
+
+			if (thisRoom.worldMapCheckType(data[1]) != VOXEL_CELL) {
+				thisRoom.blocks--;
+				thisRoom.worldMapSetType(data[1], VOXEL_CELL);
+				ss.publish.channel(channel, 'addBox', data);
+				return res(true);
 			} else {
 				return res(false);
 			}
 		},
 
-			clientMove: function(data, channel) {
-				ss.publish.channel(channel, 'addBox', data);
-				roomMap[channel].blocks--;
-				roomMap[channel].worldMap[data[1].x][data[1].y][data[1].z]=VOXEL_CELL;
-				return res(true);
-			},
+		requireReward: function(numReward, lastReward, channel) {
+			var data = getRewardCubePosition(numReward, lastReward);
+			for (var i = 0; i < data.length;i++) {
+				thisRoom.worldMapSetType(data[i], BONUS_CELL);
+			}
+			ss.publish.channel(channel, 'addRewardlist', data);
+		},
 
-			connectGame: function(playerName, playerColor, roomNumber, initialTime) {
-				var first = false;
-				if (roomMap[roomNumber] == undefined) {
-					roomMap[roomNumber] = new Room(roomNumber, initialTime);
-					first = true;
-				}
+		botMove: function(position, channel) {
+			thisRoom = roomMap[channel];
+			if (!validPosition(position)) {
+				return res(false);
+			}
 
-				thisRoom = roomMap[roomNumber];
-				thisRoom.players.push(playerName);
-				thisRoom.playercolors.push(playerColor);
-				req.session.channel.subscribe(roomNumber);
-				ss.publish.channel(roomNumber, 'addPlayer', playerName);
-				req.session.setUserId(playerName);
-				return res(thisRoom.blocks, first);
-			},
-
-			requireReward: function(numReward, lastReward, channel) {
-				var data = getRewardCubePosition(numReward, lastReward);
-				for (var i = 0; i < data.length;i++) {
-					roomMap[channel].worldMap[data[i].x][data[i].y][data[i].z] = BONUS_CELL;
-				}
-				ss.publish.channel(channel, 'addRewardlist', data);
-			},
-
-			botMove: function(position, channel) {
-				if (roomMap[channel].worldMap[position.x][position.y][position.z] == BONUS_CELL) {
-					var nextReward = new Object();
-					nextReward.x = position.x;
-					nextReward.y = position.y;
-					nextReward.z = position.z + 15;
-					//FIXME
-					roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, position,nextReward,2)) + 1;
-					do {
+			if (thisRoom.worldMapCheckType(position) == BONUS_CELL) {
+				var nextReward = new Object();
+				nextReward.x = position.x;
+				nextReward.y = position.y;
+				nextReward.z = position.z + 15;
+				//FIXME
+				thisRoom.blocks += Math.floor(getReward(thisRoom.blocks, position,nextReward,2)) + 1;
+				do {
 					var data = getRewardCubePosition(1, position);
-					} while (roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] == BONUS_CELL);
-					roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] = BONUS_CELL;
-					ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
-					ss.publish.channel(channel, 'addRewardlist', data);
-				}
-				roomMap[channel].worldMap[roomMap[channel].botPosition.x][roomMap[channel].botPosition.y][roomMap[channel].botPosition.z] = EMPTY_CELL;
-				roomMap[channel].botPssition = position;
-				roomMap[channel].worldMap[position.x][position.y][position.z] = PLAYER_CELL;
-				ss.publish.channel(channel, 'moveBot', position);
-			},
+				} while (thisRoom.worldMapCheckType(data[0]) == BONUS_CELL);
+				thisRoom.worldMapSetType(data[0], BONUS_CELL);
 
-			getRewardNum: function(currentReward, nextReward, channel) {
-			},
+				ss.publish.channel(channel, 'addblocksLeftNum', thisRoom.blocks);
+				ss.publish.channel(channel, 'addRewardlist', data);
+			}
 
-			syncWorld: function(playerName, playerColor, channel) {
-				ss.publish.channel(channel, 'newPlayerIn', playerName, playerColor);
-				return res(roomMap[channel]);
-			},
+			thisRoom.worldMapSetType(thisRoom.botPosition, EMPTY_CELL)
+			thisRoom.botPssition = position;
+			thisRoom.worldMapSetType(position, BOT_CELL)
+			ss.publish.channel(channel, 'moveBot', position);
+		},
+
+		getRewardNum: function(currentReward, nextReward, channel) {
+		},
+
+		syncWorld: function(player, channel) {
+			return res(roomMap[channel]);
+		},
 
 	};
 
