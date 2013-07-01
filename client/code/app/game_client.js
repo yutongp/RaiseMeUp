@@ -9,6 +9,10 @@ var SPEED = 30 / 7200;
 var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
 
+
+var bg_sound;
+var build_block_sound;
+
 var container, stats;
 var camera, scene, renderer;
 var projector, plane, cube;
@@ -40,7 +44,7 @@ var player;
 
 var bonusGeo;
 var bonusMaterial;
-var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
+var bounds = {maxX: 9, maxY: 9, minX:0, minY:0};
 
 var initialTime;
 var startTime = 0;
@@ -64,11 +68,14 @@ var mouseDown = false;
 
 $(document).ready(function() {
 	showInstruction();
+	//bg.sound = new Howl({
+		//urls: ['https://s3.amazonaws.com/Seattle-Pong/drum.ogg']
+	//}).play();
+	build_block_sound = new Howl({
+		urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg']
+	});
 });
 
-var sound = new Howl({
-urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg']
-});
 
 
 
@@ -748,7 +755,7 @@ function addVoxel(position, materialColor) {
 	scene.add( voxel );
 
 
-	sound.play();
+	build_block_sound.play();
 }
 
 function movePlayer(position) {

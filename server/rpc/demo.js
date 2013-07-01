@@ -1,7 +1,7 @@
 // Server-side Code
 var rewardCubeHeightRange = 9;
 var rewardCubeDistanceRange = 9;
-var bounds = {maxX: 10, maxY: 10, minX:0, minY:0};
+var bounds = {maxX: 9, maxY: 9, minX:0, minY:0};
 var heightDeltaRange = 6;
 var MaxReward = 5;
 var visited  = 1000
@@ -41,6 +41,8 @@ function Room (roomn, itime) {
 		}
 	}
 }
+
+
 
 
 var getPath = function(world,startCube,targetCube){
@@ -518,7 +520,10 @@ exports.actions = function(req, res, ss) {
 					nextReward.z = position.z + 15;
 					//FIXME
 					roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, position,nextReward,2)) + 1;
+					do {
 					var data = getRewardCubePosition(1, position);
+					} while (roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] == BONUS_CELL);
+					roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] = BONUS_CELL;
 					ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
 					ss.publish.channel(channel, 'addRewardlist', data);
 				}
