@@ -902,7 +902,11 @@ function setVoxelPosition( intersector ) {
 
 	if (xyzMatch(index, localRoom.botPosition))
 		return;
-	if (index.x >= gridCellNumber || index.y >= gridCellNumber)
+	if (index.x >= gridCellNumber || index.x < 0)
+		return;
+	if (index.y >= gridCellNumber || index.y < 0)
+		return;
+	if (index.z < 0)
 		return;
 
 	for (var i = 0; i < unCountedObjectArray.length; i++){
