@@ -17,7 +17,7 @@ ss.server.on('ready', function(){
   jQuery(function(){
     
     // Load app
-    require('/app');
+    require('/game_client');
 
   });
 

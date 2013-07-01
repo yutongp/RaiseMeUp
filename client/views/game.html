@@ -16,35 +16,13 @@
 		</style>
 		<SocketStream/>
 
-		<script>
-			function playsound(){
-				document.getElementById('audio').play();
-		  	}		
-		</script>
 	</head>
 	<body>
-
-		<!-- Background Audio -->
-		<script>
-			var sound = new Howl({
-	  		urls: ['https://s3.amazonaws.com/Seattle-Pong/drum.ogg']
-	  		}).play();
-		</script>
-		<audio src="https://s3.amazonaws.com/Seattle-Pong/drum.ogg"  autoplay loop type="audio/ogg"></audio>
-
-
 
 		<script src="http://threejs.org/build/three.min.js"></script>
 		<script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
 		<script src="http://threejs.org/examples/js/Detector.js"></script>
 
-		<script>
-			jQuery(function(){
-				var gameclient = require('./game_client.js');
-			});
-
-		</script>
-		
 		<div id='sign_up'>
                 	<span>Welcome to RaiseMeUp!</span>
                 	<form id="sign_up_form">
