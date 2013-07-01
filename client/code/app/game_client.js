@@ -4,14 +4,13 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED = 30 / 7200;
+var SPEED = 0 / 7200;
 
 var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
 
 
-var bg_sound;
-var build_block_sound;
+var bckgrd_music, build_block_sound, player_move;
 
 var container, stats;
 var camera, scene, renderer;
@@ -66,18 +65,48 @@ var targetRotation = 0;
 var mouseDown = false;
 
 
-$(document).ready(function() {
-	showInstruction();
-	//bg.sound = new Howl({
-		//urls: ['https://s3.amazonaws.com/Seattle-Pong/drum.ogg']
-	//}).play();
-	build_block_sound = new Howl({
-		urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg']
-	});
+
+
+
+bckgrd_music = new Howl({
+	urls: ['https://s3.amazonaws.com/Seattle-Pong/bckgrd_music.wav'],
+	autoplay: true,
+	loop: true,
+});
+
+build_block_sound = new Howl({
+	urls: ['https://s3.amazonaws.com/Seattle-Pong/bk.ogg'],
+	autoplay: false,
+	loop: false,
+});
+
+
+player_move = new Howl({
+	urls: ['https://s3.amazonaws.com/Seattle-Pong/move.WAV'],
+	autoplay: false,
+	loop: false,
+	volume: 0.3
+});
+
+
+coin = new Howl({
+	urls: ['https://s3.amazonaws.com/Seattle-Pong/coin.WAV'],
+	autoplay: false,
+	loop: false,
+	volume: 0.9
 });
 
 
 
+
+
+
+
+
+$(document).ready(function() {
+	showInstruction();
+	bckgrd_music.fade(0, 1, 12000);
+});
 
 
 
@@ -162,7 +191,7 @@ function requireReward(numReward, lastReward) {
 
 function countScore(){
 	if (Date.now() - initialTime > 2000) {
-		score = score + 77;
+		score = score + 3;
 		if (window.innerWidth < 600)
 			document.getElementById('scoreboard-d').innerHTML = score.toString();	
 		else document.getElementById('scoreboard').innerHTML = score.toString();
@@ -251,8 +280,31 @@ function gameboard_init() {
 	}
 	else {
 		info.id = 'info';
-		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
+		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+blocksLeft+'<br><br></a><div id="team"><a>Current players:</a></div><br><br><input type="button" id = "mute_bckgrd_music" onlick="x,." value="Mute"/><br><input type="button" id = "unmute_bckgrd_music" onlick="x,." value="Unmute"/>';
 		container.appendChild(info);
+		$("#mute_bckgrd_music").click(
+			function(){
+				// if (bckgrd_music.loop) {
+				// 	bckgrd_music.mute();
+				// 	bckgrd_music.loop(false);
+				// 	console.log("loop true");
+				// else{
+				// 	bckgrd_music.loop(true);
+				// 	bckgrd_music.play();	
+				// 	console.log("loop false");
+				// };
+
+				bckgrd_music.pause();
+			}		
+		);
+		$("#unmute_bckgrd_music").click(
+			function(){
+				// bckgrd_music.unmute();
+				// bckgrd_music.loop(true);
+				bckgrd_music.play();
+			}		
+		);
+
 	}
 
 	clock=self.setInterval(function(){countScore()},100);
@@ -387,6 +439,7 @@ function gameboard_init() {
 function movePlayerWrapper(new_position) {
 	new_position.z = (new_position.z) % gridHeight + worldIndex;
 	ss.rpc("demo.botMove", new_position, roomNumber);
+	player_move.play();
 }
 function showInstruction() {
 	$('#instruction').lightbox_me({
@@ -813,6 +866,7 @@ function checkReward(position) {
 
 	position.z = (position.z) % gridHeight + worldIndex;
 	if (getCellType(position) == BONUS_CELL) {
+
 		var i = 0
 		for (i = 0; i < rewardHash.length; i++) {
 				console.log("sadasdadsadas,");
@@ -823,6 +877,7 @@ function checkReward(position) {
 					}
 				}
 		}
+		coin.play();//play eat coin sound
 	}
 }
 
