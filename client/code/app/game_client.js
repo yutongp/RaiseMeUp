@@ -9,7 +9,7 @@ var INITIAL_CAMERA_HEIGHT = 800;
 var INITBLOCKS = 50;
 
 var firstPlayer = false;
-
+var localPlayer, localRoom;
 
 var bg_sound;
 var build_block_sound;
@@ -27,8 +27,6 @@ var voxelPosition = new THREE.Vector3(), tmpVec = new THREE.Vector3(), normalMat
 var cubeGeo, cubeMaterial;
 var i, intersector;
 
-//var playerName, roomNumber, blocksLeft;
-var localPlayer, localRoom;
 
 var gridCellSize = 100;
 var gridCellNumber = 10;
@@ -558,6 +556,7 @@ function setVoxelPosition( intersector ) {
 		if (index.x == object.index.x && index.y == object.index.y && index.z == object.index.z)
 			return;
 	}
+	rollOverMesh.index = index;
 	
 	voxelPosition = centerPosition;
 
@@ -616,12 +615,19 @@ function onDocumentMouseDown( event ) {
 
 	var intersects = raycaster.intersectObjects( scene.children );
 	intersector = getRealIntersector( intersects );
-
+	console.log(rollOverMesh.index);
+	console.log(previousIndex);
+	//ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
 	if ( intersects.length > 0 ) {
 
 		intersector = getRealIntersector( intersects );
-		if (intersector == null)
+		if (intersector == null){
+			if (xyzMatch(rollOverMesh.index, previousIndex)) {
+				ss.rpc('demo.clientMove', [1, rollOverMesh.index, localPlayer.color], localRoom.roomNumber);
+			}
+			previousIndex = rollOverMesh.index;
 			return;
+		}
 
 		if ( isCtrlDown ) {
 
@@ -640,6 +646,12 @@ function onDocumentMouseDown( event ) {
 				previousIndex = rollOverMesh.index;
 			}
 		}
+	} else {
+		
+		if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
+			ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
+		}
+		previousIndex = rollOverMesh.index;
 	}
 }
 
