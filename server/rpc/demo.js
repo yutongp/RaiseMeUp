@@ -521,6 +521,9 @@ exports.actions = function(req, res, ss) {
 					//FIXME
 					roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, position,nextReward,2)) + 1;
 					var data = getRewardCubePosition(1, position);
+					for (var i = 0; i < data.length;i++) {
+						roomMap[channel].worldMap[data[i].x][data[i].y][data[i].z] = BONUS_CELL;
+					}
 					ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
 					ss.publish.channel(channel, 'addRewardlist', data);
 				}
