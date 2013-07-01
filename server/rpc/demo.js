@@ -520,10 +520,10 @@ exports.actions = function(req, res, ss) {
 					nextReward.z = position.z + 15;
 					//FIXME
 					roomMap[channel].blocks += Math.floor(getReward(roomMap[channel].blocks, position,nextReward,2)) + 1;
+					do {
 					var data = getRewardCubePosition(1, position);
-					for (var i = 0; i < data.length;i++) {
-						roomMap[channel].worldMap[data[i].x][data[i].y][data[i].z] = BONUS_CELL;
-					}
+					} while (roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] == BONUS_CELL);
+					roomMap[channel].worldMap[data[0].x][data[0].y][data[0].z] = BONUS_CELL;
 					ss.publish.channel(channel, 'addblocksLeftNum', roomMap[channel].blocks);
 					ss.publish.channel(channel, 'addRewardlist', data);
 				}
