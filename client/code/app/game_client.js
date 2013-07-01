@@ -4,7 +4,7 @@ var EMPTY_CELL = 0;
 var VOXEL_CELL = 1;
 var PLAYER_CELL = -1;
 var BONUS_CELL = -2;
-var SPEED = 30 / 7200;
+var SPEED = 0 / 7200;
 
 var firstPlayer = false;
 var INITIAL_CAMERA_HEIGHT = 800;
@@ -515,6 +515,7 @@ function setVoxelPosition( intersector ) {
 		if (index.x == object.index.x && index.y == object.index.y && index.z == object.index.z)
 			return;
 	}
+	rollOverMesh.index = index;
 	
 	voxelPosition = centerPosition;
 
@@ -568,12 +569,19 @@ function onDocumentMouseDown( event ) {
 
 	var intersects = raycaster.intersectObjects( scene.children );
 	intersector = getRealIntersector( intersects );
-
+	console.log(rollOverMesh.index);
+	console.log(previousIndex);
+	//ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
 	if ( intersects.length > 0 ) {
 
 		intersector = getRealIntersector( intersects );
-		if (intersector == null)
+		if (intersector == null){
+			if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
+				ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
+			}
+			previousIndex = rollOverMesh.index;
 			return;
+		}
 
 		if ( isCtrlDown ) {
 			//if ( intersector.object != plane ) {
@@ -601,6 +609,12 @@ function onDocumentMouseDown( event ) {
 				previousIndex = rollOverMesh.index;
 			}
 		}
+	} else {
+		
+		if (rollOverMesh.index.x == previousIndex.x && rollOverMesh.index.y == previousIndex.y && rollOverMesh.index.z == previousIndex.z){
+			ss.rpc('demo.clientMove', [1, rollOverMesh.index, cubecolor], roomNumber);
+		}
+		previousIndex = rollOverMesh.index;
 	}
 }
 
