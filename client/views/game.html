@@ -12,17 +12,60 @@
 				overflow: hidden;
 			}
 			#oldie { background-color: #ddd !important }
+
+			.startGame {
+				background-color:#f9f9f9;
+				-moz-border-radius:18px;
+				-webkit-border-radius:18px;
+				border-radius:18px;
+				border:1px solid #dcdcdc;
+				display:inline-block;
+				color:#666666;
+				font-family:Courier New;
+				font-size:15px;
+				font-weight:bold;
+				padding:6px 24px;
+				text-decoration:none;
+			}
+			.startGame:hover {
+				background-color:#e9e9e9;
+			}
+			.startGame:active {
+				position:relative;
+				top:1px;
+			}
+
 		</style>
 		<SocketStream/>
 	</head>
 	<body>
+		<div id='instruction'>
+			<br><a>Welcome to RaiseMeUp!</a>
+			<br><br><a>Here are some instructions for you to get started:</a>
+			<br><br><a><b>Objective:</b> </a>
+			<br><a>Place cubes onto the grid to build pathways that helps the "round man" escape from the rising water.</a>
+			<br><br><a><b>Controls:</b></a>
+			<br><a>To place a cube: double click on the grid</a>
+			<br><a>To rotate views: click and drag the mouse</a>
+			<br><a>To trigger AI for the "round man":  press "=" on keyboard</a>
+			<br><a>To control "round man" movement yourself: keyboard "W", "A", "S", "D"</a>
+
+
+			<br><br><a><b>*Note:</b> Cubes are limited resources! Make sure you lead the "round man" to the coins to build higher! <br>
+			You can either play single player mode or play with others. You just need to share a room number.</a>
+
+			<br><br><button class='startGame' style='margin-top:10px'>Enter the game</button><br><br>
+		</div>
+
+
 		<div id='sign_up'>
-			<span>Welcome to RaiseMeUp!</span>
+			<a>Open a new room or join an existing room</a>
+			<br>
 			<form id="sign_up_form">
 				<div><a>Player Name: </a><input type="text" name="player_name"/></div>
 				<div><a>Room Number: </a><input type="text" name="room_number"/></div>
-				<button class="confirm">Enter the game!</button>
-				<div id='emptyInput'>* Please enter your name and a room number!</span>
+				<button class="confirm startGame">Let's go!</button>
+				<div id='emptyInput'>* Please enter your name and a room number</div>
 			</form>
 		</div>
 		<div id='gameOver_popup'>
@@ -30,17 +73,6 @@
 			<a>Your score is: </a><a id='scored'></a><a>.</a><br><br>
 			<a>Highest height: </a><a id='highest'></a><a>.</a><br><br>
 		</div>
-		<div id='instruction'>
-			<br><a>Welcome to RaiseMeUp!</a>
-			<br><br><a>Here are some instructions for you to get started:</a>
-			<br><br><a><b>Objective:</b> </a>
-			<br><a>Place cubes onto the grid to build stairs that helps the "circular man" escape from the rising water.</a>
-			<br><br><a><b>Controls:</b></a>
-			<br><a>To place a cube - double click on the grid</a>
-			<br><a>To trigle AI - "=" </a>
-			<br><a>To make "circular man" move - keyboard "W", "A", "S", "D"</a>
-			<br><br><a><b>*Note:</b> Cubes are limited! Make sure you lead the "circular man" to earn cubes by reaching for reward coins! </a>
-			<br><br><button class='startGame'>Let's go!</button>
-		</div>
+
 	</body>
 </html>

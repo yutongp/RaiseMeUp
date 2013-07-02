@@ -326,13 +326,13 @@ function gameboard_init() {
 	if (window.innerWidth < 600) { //Detect devices
 		//TODO change back to info-d
 		info.id = 'info';
-		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
+		info.innerHTML = '<br><div id="device-1"><a>Score: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Cubes remaining: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
 		container.appendChild(info);
 	}
 	else {
 		info.id = 'info';
 		//info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br>';
-		info.innerHTML = '<br><a>SCORE: </a><br><a id="scoreboard">0</a><br><br><a>Number of CUBEs left: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Current players:</a></div><br><br><input type="button" id = "mute_bckgrd_music" onlick="x,." value="Mute"/><br><input type="button" id = "unmute_bckgrd_music" onlick="x,." value="Unmute"/>';
+		info.innerHTML = '<br><a>Score: </a><br><a id="scoreboard">0</a><br><br><a>Cubes remaining: </a><br><a id="blockNum">'+localRoom.blocks+'<br><br></a><div id="team"><a>Players in this room:</a></div><br><br><input type="button" id = "mute_bckgrd_music" onlick="x,." value="Mute"/><br><input type="button" id = "unmute_bckgrd_music" onlick="x,." value="Unmute"/>';
 		container.appendChild(info);
 		$("#mute_bckgrd_music").click(
 			function(){
