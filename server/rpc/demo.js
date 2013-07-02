@@ -571,14 +571,15 @@ exports.actions = function(req, res, ss) {
 				nextReward.y = position.y;
 				nextReward.z = position.z + 15;
 				//FIXME
-				thisRoom.blocks += Math.floor(getReward(thisRoom.blocks, position,nextReward,2)) + 1;
-				console.log("Block:", thisRoom.blocks);
+				var addBlocks = Math.floor(getReward(thisRoom.blocks, position,nextReward,2)) + 1;
+				console.log("BlockAdd:", addBlocks);
+				thisRoom.blocks += addBlocks;
 				do {
 					var data = getRewardCubePosition(1, highestReward);
 				} while (thisRoom.worldMapCheckType(data[0]) == BONUS_CELL);
 				thisRoom.worldMapSetType(data[0], BONUS_CELL);
 
-				ss.publish.channel(channel, 'addblocksLeftNum', thisRoom.blocks);
+				ss.publish.channel(channel, 'addblocksLeftNum', thisRoom.blocks, addBlocks);
 				ss.publish.channel(channel, 'addRewardlist', data);
 			}
 

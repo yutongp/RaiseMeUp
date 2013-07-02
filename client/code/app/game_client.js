@@ -5,6 +5,10 @@ var VOXEL_CELL = 1;
 var BOT_CELL = -1;
 var BONUS_CELL = -2;
 var SPEED =  40 / 7200;
+//var SPEED =  000000000;
+var R_ADDBLOCK = 0;
+var R_ADDPLAYER = 1;
+var R_RMPLAYER = 1;
 
 var INITIAL_CAMERA_HEIGHT = 800;
 var INITBLOCKS = 50;
@@ -173,7 +177,7 @@ function gameInit() {
 		}
 		if (data[0] == 1) {
 			if (localRoom.worldMapCheckType(data[1]) == EMPTY_CELL && localRoom.blocks > 0) {
-				addVoxel( data[1], parseInt(data[2]) );
+				addVoxel( data[1], parseInt("0x" + data[2].substring(1)) );
 				localRoom.worldMapSetType(data[1], VOXEL_CELL);
 				localRoom.blocks = localRoom.blocks - 1;
 				if (window.innerWidth < 600) {
@@ -205,23 +209,26 @@ function gameInit() {
 		}
 	});
 
-	ss.event.on('addblocksLeftNum', function(data, channelNumber) {
-		localRoom.blocks = data;
+	ss.event.on('addblocksLeftNum', function(tblocks, addBlocks, channelNumber) {
+		localRoom.blocks = tblocks;
 		if (window.innerWidth < 600) {
 			document.getElementById('blockNum-d').innerHTML = localRoom.blocks.toString()+'<br><br>';
 		} else {
 			document.getElementById('blockNum').innerHTML = localRoom.blocks.toString()+'<br><br>';
 		}
+		realtimeinfo(addBlocks, R_ADDBLOCK);
 	});
 
 	ss.event.on('newPlayerIn', function(player, channelNumber) {
 		if (player.name != localPlayer.name) {
 			showPlayeronMenu(player);
+			realtimeinfo(player, R_ADDPLAYER);
 		}
 		localRoom.addPlayer(localPlayer.name, localPlayer.color);
 	});
 
 	ss.event.on('playerOut', function(player, channelNumber) {
+		realtimeinfo(player, R_RMPLAYER);
 		removePlayeronMenu(player);
 	});
 
@@ -277,6 +284,7 @@ function gameboard_init() {
 			localRoom.initTime = worldData.initTime;
 			localRoom.worldMap = worldData.worldMap;
 			localRoom.aiStat = worldData.aiStat;
+			var waterPos = Math.floor(((Date.now() - localRoom.initTime ) * SPEED) / gridCellSize);
 			var n = new Object();
 			for (var i = 0; i < gridCellNumber; i++) {
 				for (var j = 0; j < gridCellNumber; j++){
@@ -286,25 +294,21 @@ function gameboard_init() {
 						n.z = k;
 						if (localRoom.worldMapCheckType(n) == VOXEL_CELL) {
 							addVoxel(n);
+							n = new Object();
 						} else if (localRoom.worldMapCheckType(n) == BOT_CELL) {
 							moveBot(n);
+							n = new Object();
 						} else if (localRoom.worldMapCheckType(n) == BONUS_CELL) {
-							var rewardin = false;
-							for (var r = 0; r < rewardHash.length; r++) {
-								if (rewardHash[r] == undefined) {
-									rewardHash[r] = addBonus(n);
-									rewardin = true;
-									break;
-								}
-							}
-							if (!rewardin) {
+							if(n.z >= waterPos) {
 								rewardHash.push(addBonus(n));
+								n = new Object();
 							}
 						}
 					}
 				}
 			}
 
+			console.log("rewardHash", rewardHash);
 			for ( var m in localRoom.players) {
 				if (localRoom.players[m].name != localPlayer.name) {
 					showPlayeronMenu(localRoom.players[m]);
@@ -319,7 +323,8 @@ function gameboard_init() {
 
 	var info = document.createElement('div');
 	if (window.innerWidth < 600) { //Detect devices
-		info.id = 'info-d';
+		//TODO change back to info-d
+		info.id = 'info';
 		info.innerHTML = '<br><div id="device-1"><a>SCORE: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Number of CUBEs left: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
 		container.appendChild(info);
 	}
@@ -341,6 +346,7 @@ function gameboard_init() {
 		);
 
 	}
+	$("#info").css("opacity", 0.7);
 
 	clock=self.setInterval(function(){countScore()},100);
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -424,6 +430,8 @@ function gameboard_init() {
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
 	$('#grid').append( stats.domElement );
+	//TODO change hard code stlye to denamic one
+	$('#grid').append('<div id="realtimeinfo" style="margin-left: -100px; display: block; position: fixed; width: 200px; height: 10px; top: 50%; left: 50%; font-size: 20px;"></div>');
 	$('#grid').bind('mousedown', onDocumentMouseDown);
 	$('#grid').bind('mousemove', onDocumentMouseMove);
 
@@ -807,7 +815,7 @@ function signIn() {
 	onClose: function() {
 		var playerName = $('input[name="player_name"]').val();
 		var roomNumber = $('input[name="room_number"]').val();
-		var cubecolor = '0x' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
+		var cubecolor = '#' + (function co(lor){   return (lor +=[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)]) && (lor.length == 6) ?  lor : co(lor); })('');
 		var initialTime = Date.now();
 		if (playerName == '' || roomNumber == '') {
 			$('#emptyInput').attr('style','visibility: visible;');
@@ -835,9 +843,36 @@ function gameOver() {
 	});
 }
 
+function realtimeinfo(data, type) {
+	if (type == R_ADDBLOCK) {
+		$("#realtimeinfo").css('color', localPlayer.color);
+		$("#realtimeinfo").text("+ "+ data +" CUBE");
+		$("#realtimeinfo").fadeOut(1100, function() {
+			$("#realtimeinfo").text("");
+			$("#realtimeinfo").fadeIn();
+		});
+	}
+	if (type == R_ADDPLAYER) {
+		$("#realtimeinfo").css('color', data.color);
+		$("#realtimeinfo").text("Player: "+ data.name +" in");
+		$("#realtimeinfo").fadeOut(1100, function() {
+			$("#realtimeinfo").text("");
+			$("#realtimeinfo").fadeIn();
+		});
+	}
+	if (type == R_RMPLAYER) {
+		$("#realtimeinfo").css('color', data.color);
+		$("#realtimeinfo").text("Player: "+ data.name +" leave");
+		$("#realtimeinfo").fadeOut(1100, function() {
+			$("#realtimeinfo").text("");
+			$("#realtimeinfo").fadeIn();
+		});
+	}
+}
+
 function showPlayeronMenu(player) {
 	if (window.innerWidth > 600) {
-		$('#team').append('<br><a id="'+player.name+'"style="color: #'+player.color.substring(2)+';">'+player.name+'</a>');
+		$('#team').append('<br><a id="'+player.name+'"style="color:' + player.color + ';">'+player.name+'</a>');
 	}
 }
 
@@ -1249,6 +1284,7 @@ function checkReward(position) {
 					console.log("reach reward",position);
 					scene.remove(rewardHash[i]);
 					rewardHash[i] = undefined;
+					break;
 				}
 			}
 		}
