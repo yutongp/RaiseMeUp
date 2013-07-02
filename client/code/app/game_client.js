@@ -326,7 +326,7 @@ function gameboard_init() {
 	if (window.innerWidth < 600) { //Detect devices
 		//TODO change back to info-d
 		info.id = 'info';
-		info.innerHTML = '<br><div id="device-1"><a>Score: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Cubes remaining: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
+		info.innerHTML = '<br><div id="device-1"><a>Score: </a><a id="scoreboard-d">0</a></div><div id="device-2"><a>Cubes: </a><a id="blockNum-d">'+localRoom.blocks+'</a></div><br>';
 		container.appendChild(info);
 	}
 	else {
