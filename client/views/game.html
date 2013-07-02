@@ -13,6 +13,26 @@
 			}
 
 			#oldie { background-color: #ddd !important }
+
+			.startGame {
+				background-color:#f9f9f9;
+				-moz-border-radius:19px;
+				-webkit-border-radius:19px;
+				border-radius:19px;
+				border:1px solid #dcdcdc;
+				display:inline-block;
+				color:#666666;
+				font-family:arial;
+				font-size:15px;
+				font-weight:bold;
+				padding:6px 21px;
+				text-decoration:none;
+				}.startGame:hover {
+				background-color:#e9e9e9;
+				}.startGame:active {
+				position:relative;
+				top:1px;
+			}
 		</style>
 		<SocketStream/>
 	</head>
@@ -32,17 +52,18 @@
 			<br><br><a><b>*Note:</b> Cubes are limited resources! Make sure you lead the "round man" to the coins to build higher! <br>
 			You can either play single player mode or play with others. You just need to share a room number.</a>
 
-			<br><br><button class='startGame'>Enter the game</button><br><br>
+			<br><br><button class='startGame' style='margin-top:10px'>Enter the game</button><br><br>
 		</div>
 
 
 		<div id='sign_up'>
-			<span>Open a new room or join an existing room</span>
+			<a>Open a new room or join an existing room</a>
+			<br>
 			<form id="sign_up_form">
 				<div><a>Player Name: </a><input type="text" name="player_name"/></div>
 				<div><a>Room Number: </a><input type="text" name="room_number"/></div>
-				<button class="confirm">Let's go!</button>
-				<div id='emptyInput'>* Please enter your name and a room number</span>
+				<button class="confirm startGame">Let's go!</button>
+				<div id='emptyInput'>* Please enter your name and a room number</div>
 			</form>
 		</div>
 		<div id='gameOver_popup'>
