@@ -11,7 +11,6 @@ var INITBLOCKS = 50;
 
 var firstPlayer = false;
 var localPlayer, localRoom;
-var aiStat = false;
 
 var bckgrd_bgm, build_block_bgm, player_move_bgm, coin_bgm;
 
@@ -86,6 +85,7 @@ function Room (roomn, itime) {
 	this.roomNumber = roomn;
 	this.botPosition = {x:0, y:0, z: 0};
 	this.initTime = itime;
+	this.aiStat = true;
 
 	this.worldMap = new Array();
 	for (var i = 0; i<gridCellNumber; i++) {
@@ -200,6 +200,9 @@ function gameInit() {
 				rewardHash.push(addBonus(data[i]));
 			}
 		}
+		if (localRoom.aiStat && firstPlayer) {
+			initAI();
+		}
 	});
 
 	ss.event.on('addblocksLeftNum', function(data, channelNumber) {
@@ -225,6 +228,10 @@ function gameInit() {
 	ss.event.on('moveBot', function(data, hr, channelNumber) {
 		highestReward = hr;
 		moveBot(data);
+	});
+
+	ss.event.on('setAI_s', function(stat, channelNumber) {
+		localRoom.aiStat = stat;
 	});
 
 }
@@ -269,6 +276,7 @@ function gameboard_init() {
 			localRoom.botPosition = worldData.botPosition;
 			localRoom.initTime = worldData.initTime;
 			localRoom.worldMap = worldData.worldMap;
+			localRoom.aiStat = worldData.aiStat;
 			var n = new Object();
 			for (var i = 0; i < gridCellNumber; i++) {
 				for (var j = 0; j < gridCellNumber; j++){
@@ -453,24 +461,11 @@ function gameboard_init() {
 			case 61:
 				//#AI
 				
-				if (aiStat == false) {
-					aiStat = true;
-					console.log('ai start');
-					var target = new Object();
-					var nearestReward = getNearestReward();
-					console.log("nearest: ",nearestReward);
-					target.x = nearestReward.index.x;
-					target.y = nearestReward.index.y;
-					target.z = nearestReward.index.z - 1;
-					var cP = new Object();
-					cP.x = localRoom.botPosition.x;
-					cP.y = localRoom.botPosition.y;
-					cP.z = localRoom.botPosition.z - 1;
-					path = getPath2(localRoom.worldMap,cP,target);
-					console.log("path: ",path);
-					aiMove(path);
+				if (localRoom.aiStat == false) {
+					setAIstate(true);
+					initAI();
 				} else {
-					aiStat = false;
+					setAIstate(false);
 				}
 				break;
 			default:
@@ -674,8 +669,29 @@ var getPath2 = function(world,startCube,targetCube){
 }
 
 //#AI
-function xyzMatch(cube1,cube2){
+function xyzMatch(cube1,cube2) {
 	return ((cube1.x == cube2.x) && (cube1.y == cube2.y) && (cube1.z == cube2.z));
+}
+
+function setAIstate(stat) {
+	ss.rpc("demo.setAI_c", stat, localRoom.roomNumber);
+}
+
+function initAI() {
+	console.log('ai start');
+	var target = new Object();
+	var nearestReward = getNearestReward();
+	console.log("nearest: ",nearestReward);
+	target.x = nearestReward.index.x;
+	target.y = nearestReward.index.y;
+	target.z = nearestReward.index.z - 1;
+	var cP = new Object();
+	cP.x = localRoom.botPosition.x;
+	cP.y = localRoom.botPosition.y;
+	cP.z = localRoom.botPosition.z - 1;
+	path = getPath2(localRoom.worldMap,cP,target);
+	console.log("path: ",path);
+	aiMove(path);
 }
 
 //#AI
@@ -1141,16 +1157,16 @@ function render() {
 }
 
 function addVoxel(position, materialColor) {
-	if (position.x < 0 || position.x >= gridCellNumber)
-		return;
-	if (position.y < 0 || position.y >= gridCellNumber)
-		return;
-	if (position.z < 0)
-		return;
+	//if (position.x < 0 || position.x >= gridCellNumber)
+		//return;
+	//if (position.y < 0 || position.y >= gridCellNumber)
+		//return;
+	//if (position.z < 0)
+		//return;
 
 	//stop ai move #AI
 	clearTimeout(nextMoveCall);
-	if (aiStat) {
+	if (localRoom.aiStat) {
 		nextMoveCall =  setTimeout( function(){findNewPath()},moveDelay);
 	}
 
@@ -1217,6 +1233,7 @@ function waterFlow(waterPos) {
 				if(rewardHash[i].index.z == waterPos) {
 					rewardHash[i] = undefined;
 					requireReward(1, highestReward, localRoom.roomNumber);
+					console.log('water flow reward');
 				}
 			}
 		}
@@ -1229,17 +1246,20 @@ function checkReward(position) {
 		for ( var i = 0; i < rewardHash.length; i++) {
 			if (rewardHash[i] != undefined) {
 				if(xyzMatch(rewardHash[i].index, position)) {
+					console.log("reach reward",position);
 					scene.remove(rewardHash[i]);
 					rewardHash[i] = undefined;
-					//#AI
-					if (aiStat) {
-						nextMoveCall =  setTimeout( function(){findNewPath()},500);
-					}
 				}
 			}
 		}
+		//#AI
+		if (localRoom.aiStat) {
+			nextMoveCall =  setTimeout( function(){findNewPath()},500);
+		}
 		coin_bgm.play();//play eat coin sound
+		return true;
 	}
+	return false;
 }
 
 

@@ -36,6 +36,7 @@ function Room (roomn, itime) {
 	this.roomNumber = roomn;
 	this.botPosition = {x:0, y:0, z: 0};
 	this.initTime = itime;
+	this.aiStat = true;
 
 	this.worldMap = new Array();
 	for (var i = 0; i<gridCellNumber; i++) {
@@ -408,9 +409,9 @@ function xyzMatch(cube1, cube2){
 
 var getReward = function(currentNumOfBlocks, currentReward,nextReward,Map) {
 
-	var blocksNeed = blocksNeedBetweenTwoReward(currentReward,nextReward);
-	var blockRatio = currentNumOfBlocks/blocksNeed;
-	return Math.random()*MaxReward/(blockRatio);
+	var blocksNeed = blocksNeedBetweenTwoReward(currentReward, nextReward) + 1;
+	var blockRatio = (currentNumOfBlocks + 1) / blocksNeed;
+	return Math.random() * MaxReward / (blockRatio);
 }
 
 function blocksNeedBetweenTwoReward(r1,r2)
@@ -421,7 +422,7 @@ function blocksNeedBetweenTwoReward(r1,r2)
 	if(distx+disty-distz<0){
 		distz = distz + (distz - distx - disty)*2
 	}
-	return distx+disty+distz;
+	return distx + disty + distz;
 }
 
 var getRewardCubePosition = function (numOfReward,curHigestReward){
@@ -448,6 +449,7 @@ var getRewardCubePosition = function (numOfReward,curHigestReward){
 		temp.y = newY;
 		temp.z = newZ;
 		rewardCubes[i] = temp;
+		console.log("add Reward:", temp);
 	}
 	highestReward = rewardCubes[numOfReward - 1];
 	return rewardCubes;
@@ -514,7 +516,7 @@ exports.actions = function(req, res, ss) {
 				first = true;
 			}
 
-			thisRoom = roomMap[roomNumber];
+			var thisRoom = roomMap[roomNumber];
 			thisRoom.addPlayer(player.name, player.color);
 			req.session.channel.subscribe(roomNumber);
 			req.session.setUserId(player.name);
@@ -528,7 +530,7 @@ exports.actions = function(req, res, ss) {
 		},
 
 		clientMove: function(data, channel) {
-			thisRoom = roomMap[channel];
+			var thisRoom = roomMap[channel];
 
 			console.log(data[1]);
 			if (!validPosition(data[1])) {
@@ -547,6 +549,7 @@ exports.actions = function(req, res, ss) {
 
 		requireReward: function(numReward, lastReward, channel) {
 			var data = getRewardCubePosition(numReward, lastReward);
+			var thisRoom = roomMap[channel];
 			for (var i = 0; i < data.length;i++) {
 				thisRoom.worldMapSetType(data[i], BONUS_CELL);
 			}
@@ -554,7 +557,7 @@ exports.actions = function(req, res, ss) {
 		},
 
 		botMove: function(position, channel) {
-			thisRoom = roomMap[channel];
+			var thisRoom = roomMap[channel];
 			if (!validPosition(position)) {
 				return res(false);
 			}
@@ -569,6 +572,7 @@ exports.actions = function(req, res, ss) {
 				nextReward.z = position.z + 15;
 				//FIXME
 				thisRoom.blocks += Math.floor(getReward(thisRoom.blocks, position,nextReward,2)) + 1;
+				console.log("Block:", thisRoom.blocks);
 				do {
 					var data = getRewardCubePosition(1, highestReward);
 				} while (thisRoom.worldMapCheckType(data[0]) == BONUS_CELL);
@@ -582,6 +586,11 @@ exports.actions = function(req, res, ss) {
 			thisRoom.botPosition = position;
 			thisRoom.worldMapSetType(position, BOT_CELL)
 			ss.publish.channel(channel, 'moveBot', position, highestReward);
+		},
+
+		setAI_c: function(stat, channel) {
+			roomMap[channel].aiStat = stat;
+			ss.publish.channel(channel, 'setAI_s', stat);
 		},
 
 		getRewardNum: function(currentReward, nextReward, channel) {
