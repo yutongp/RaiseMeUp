@@ -284,7 +284,7 @@ function gameboard_init() {
 			localRoom.botPosition = worldData.botPosition;
 			localRoom.initTime = worldData.initTime;
 			localRoom.worldMap = worldData.worldMap;
-			localRoom.aiStat = worldData.aiStat;
+			localRoom.aiStat = false;
 			var waterPos = Math.floor(((Date.now() - localRoom.initTime ) * SPEED) / gridCellSize);
 			var n = new Object();
 			for (var i = 0; i < gridCellNumber; i++) {
