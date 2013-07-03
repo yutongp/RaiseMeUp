@@ -276,7 +276,7 @@ function gameboard_init() {
 	previousIndex.z = 0;
 	unCountedObjectArray = new Array();
 	if (firstPlayer == true) {
-		requireReward(5, localRoom.botPosition);
+		requireReward(5, localRoom.botPosition, localRoom.roomNumber);
 	} else {
 		ss.rpc('demo.syncWorld', localPlayer, localRoom.roomNumber, function(worldData){
 			localRoom.players = worldData.players;
@@ -1296,7 +1296,9 @@ function waterFlow(waterPos) {
 			if (rewardHash[i] != undefined) {
 				if(rewardHash[i].index.z == waterPos) {
 					rewardHash[i] = undefined;
-					requireReward(1, highestReward, localRoom.roomNumber);
+					if (firstPlayer) {
+						requireReward(1, highestReward, localRoom.roomNumber);
+					}
 					console.log('water flow reward');
 				}
 			}
