@@ -1,25 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8"/>
-    <SocketStream/>
-    <title>Welcome</title>
-  </head>
-  <body>
-    <div id="content">
-      <!--<a href="https://github.com/socketstream/socketstream">-->
-        <!--<img src="/images/logo.png" alt="SocketStream Logo" width="160" height="160">-->
-      <!--</a>-->
-      <!--<h1>Welcome to your new realtime app!</h1>-->
+	<head>
+		<meta charset="utf-8"/>
+		<SocketStream/>
+		<title>Welcome</title>
+		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+		<style>
 
-      <!--[> QUICK CHAT DEMO<]-->
-      <!--<form id="demo" onsubmit="return false">-->
-        <!--<h3>Quick Chat Demo</h3>-->
-        <!--<h5>Open this page in multiple tabs or browsers and type a message below</h5>-->
-        <!--<div id="chatlog"></div>-->
-        <!--<input id="myMessage" type="text" autocomplete="off">-->
-      <!--</form>-->
-		<h1><a href='/game'>Hello World!</a></h1>
-    </div>
-  </body>
+			html, body {
+				height:100%;
+				width:100%;
+				display: table;
+				margin:0;
+			}
+			body {
+				height: 100%;
+				font-family: "Helvetica Neue",Arial,Helvetica,Geneva,sans-serif;
+				padding: 0px;
+				background-color: #fff;
+			}
+			#rotate {
+				height: 100%;
+				padding: 0px;
+				display: table-cell;
+				vertical-align: middle;
+				background-color: rgb(28, 28, 28);
+			}
+			a {
+				font-family: "FontAwesome";
+				text-decoration:none;
+				color: #fff;
+				font-size: 8em;
+				border: 0.05em solid #fff;
+				border-radius: 8em;
+				padding: 20px 30px;
+			}
+			#wrapper {
+				width: 120px;
+				margin: 0 auto;
+			}
+		</style>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+		<script>
+			var breathe;
+			var shadow=0;
+			var ng=1;
+
+			var x,y,n=0,ny=0,rotINT,rotXINT
+			$(document).ready(function(){
+				breathe = setInterval(function(){
+					if (ng > 0) {
+						shadow += 2;
+						} else {
+						shadow -= 2;
+					}
+					if (shadow == 20 || shadow == 0) {
+						ng = -ng;
+					}
+					$("a").css("text-shadow","0px 0px "+shadow+"px #fff");
+					$("a").css("box-shadow","0px 0px "+shadow+"px #fff");
+				}, 100);
+				$("#button").click(rotateXDIV);
+			});
+			function rotateXDIV()
+			{
+				y=document.getElementById("rotate")
+				clearInterval(rotXINT)
+				rotXINT=setInterval("startXRotate()",7)
+			}
+			function startRotate()
+			{
+				n=n+1
+				x.style.transform="rotate(" + n + "deg)"
+				x.style.webkitTransform="rotate(" + n + "deg)"
+				x.style.OTransform="rotate(" + n + "deg)"
+				x.style.MozTransform="rotate(" + n + "deg)"
+				if (n==180 || n==360)
+				{
+					clearInterval(rotINT)
+					if (n==360){n=0}
+				}
+			}
+			function startXRotate()
+			{
+				ny=ny+1
+				y.style.transform="rotateX(" + ny + "deg)"
+				y.style.webkitTransform="rotateX(" + ny + "deg)"
+				y.style.OTransform="rotateX(" + ny + "deg)"
+				y.style.MozTransform="rotateX(" + ny + "deg)"
+				if (ny==90)
+				{
+					clearInterval(rotXINT);
+					ny = 0;
+					window.location.href = "/game";
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div id="rotate">
+			<div id="content">
+				<div id="wrapper"><a rel="external" href="#button" id="button">&#xF011;</a></div>
+			</div>
+		</div>
+	</body>
 </html>
+
+
+
+<!--@font-face {-->
+<!--font-family: "FontAwesome";-->
+<!--src: url("font-awesome/font/fontawesome-webfont.eot");-->
+<!--src: url("font-awesome/font/fontawesome-webfont.eot?#iefix") format('eot'),-->
+<!--url("font-awesome/font/fontawesome-webfont.woff") format('woff'),-->
+<!--url("font-awesome/font/fontawesome-webfont.ttf") format('truetype'),-->
+<!--url("font-awesome/font/fontawesome-webfont.svg#FontAwesome") format('svg');-->
+<!--font-weight: normal;-->
+<!--font-style: normal;-->
+<!--}-->
