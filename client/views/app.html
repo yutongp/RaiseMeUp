@@ -18,7 +18,12 @@
 				font-family: "Helvetica Neue",Arial,Helvetica,Geneva,sans-serif;
 				padding: 0px;
 				background-color: #fff;
+				-webkit-perspective: 600px;
+				-moz-perspective: 600px;
+				-o-perspective: 600px;
+				perspective: 600px;
 			}
+
 			#rotate {
 				height: 100%;
 				padding: 0px;
@@ -56,8 +61,8 @@
 					if (shadow == 20 || shadow == 0) {
 						ng = -ng;
 					}
-					$("a").css("text-shadow","0px 0px "+shadow+"px #fff");
-					$("a").css("box-shadow","0px 0px "+shadow+"px #fff");
+					$("a").css("text-shadow","0px 1px "+shadow+"px #fff");
+					$("a").css("box-shadow","0px 1px "+shadow+"px #fff");
 				}, 100);
 				$("#button").click(rotateXDIV);
 			});
