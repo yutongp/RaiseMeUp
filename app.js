@@ -7,7 +7,7 @@ var http = require('http'),
 ss.client.define('main', {
   view: 'app.html',
   css:  ['libs/reset.css', 'app.styl'],
-  code: ['libs/jquery.min.js', 'app'],
+  code: ['libs/jquery.min.js', 'libs/breathelight/breathelight.js', 'app'],
   tmpl: '*'
 });
 
@@ -21,7 +21,8 @@ ss.http.route('/', function(req, res){
 ss.client.define('game', {
   view: 'game.html',
   css:  ['libs/reset.css', 'app.styl'],
-  code: ['libs/jquery.min.js','libs/threejs/','libs/jquery.lightbox_me.js', 'libs/howler.min.js','app'],
+  code: ['libs/jquery.min.js','libs/threejs/','libs/jquery.lightbox_me.js',
+	'libs/howler.min.js', 'app'],
   tmpl: '*'
 });
 
