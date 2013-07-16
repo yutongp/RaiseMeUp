@@ -8,6 +8,7 @@ var SPEED =  50 / 7200;
 //var SPEED =  000000000;
 var R_ADDBLOCK = 0;
 var R_ADDPLAYER = 1;
+var R_RMPLAYER = 2;
 
 
 var INITIAL_CAMERA_HEIGHT = 800;
